@@ -468,23 +468,6 @@ Forge 1.7.10 predates the `InputUpdateEvent` used by newer controller mods. A fo
 after vanilla calculates keyboard movement, adds the larger controller value on each axis, and preserves simultaneous
 keyboard input.
 
-## Implementation roadmap
-
-1. SDL3 device detection, live diagnostics, dead zones, curves, and automated input math tests.
-2. Analog in-world movement, camera, core actions, and safe release of held input.
-3. Configurable action bindings with accessible defaults and SDL paddle support.
-4. GUI cursor movement, click, drag, right-click, back behavior, and physical-mouse coexistence.
-5. An in-game binding editor with live SDL3 button, trigger, and paddle capture.
-6. Compatibility adapters for vanilla lists and BetterQuesting, plus optional Auto Jump and Auto Swim.
-7. Searchable, category-filtered controller mappings for registered Minecraft and mod key actions.
-8. GUI scrolling, directional button navigation, inventory-slot navigation, and a precision cursor mode.
-9. A low-input radial menu for GTNH's unusually large keybind set.
-10. Controller-friendly on-screen text entry.
-11. Per-action accessibility activation modes with safe latch release.
-12. Named controller profiles.
-13. Multiple-controller input merging for split or adaptive-control setups.
-14. Accessibility testing, multiplayer safety, cross-platform testing, packaging, and an upstream proposal.
-
 The mod does not assign every GTNH keybind to a fixed controller chord. Players opt into direct bindings or radial
 slots for the actions they need, while future contexts and profiles can make the unusually large action set easier to
 reach.
