@@ -51,31 +51,17 @@ final class OnScreenKeyboardLayout {
         }
     }
 
-    private static final Key[][] LETTERS = {
-        characterKeys("1234567890"),
-        characterKeys("qwertyuiop"),
-        characterKeys("asdfghjkl"),
-        characterKeys("zxcvbnm,.-"),
-        {
-            commandKey("Caps", Command.CAPS, 1.4F),
-            commandKey("#+=", Command.SYMBOLS, 1.4F),
-            commandKey("Space", Command.SPACE, 3.0F),
-            commandKey("Back", Command.BACKSPACE, 1.5F),
-            commandKey("Enter", Command.ENTER, 1.5F),
-            commandKey("Done", Command.DONE, 1.4F) } };
+    private static final Key[][] LETTERS = { characterKeys("1234567890"), characterKeys("qwertyuiop"),
+        characterKeys("asdfghjkl"), characterKeys("zxcvbnm,.-"),
+        { commandKey("Caps", Command.CAPS, 1.4F), commandKey("#+=", Command.SYMBOLS, 1.4F),
+            commandKey("Space", Command.SPACE, 3.0F), commandKey("Back", Command.BACKSPACE, 1.5F),
+            commandKey("Enter", Command.ENTER, 1.5F), commandKey("Done", Command.DONE, 1.4F) } };
 
-    private static final Key[][] SYMBOLS = {
-        characterKeys("!@#$%^&*"),
-        characterKeys("()-_=+[]"),
-        characterKeys("{}\\|;:'\""),
-        characterKeys(",.<>?/`~"),
-        {
-            commandKey("Caps", Command.CAPS, 1.4F),
-            commandKey("ABC", Command.SYMBOLS, 1.4F),
-            commandKey("Space", Command.SPACE, 3.0F),
-            commandKey("Back", Command.BACKSPACE, 1.5F),
-            commandKey("Enter", Command.ENTER, 1.5F),
-            commandKey("Done", Command.DONE, 1.4F) } };
+    private static final Key[][] SYMBOLS = { characterKeys("!@#$%^&*"), characterKeys("()-_=+[]"),
+        characterKeys("{}\\|;:'\""), characterKeys(",.<>?/`~"),
+        { commandKey("Caps", Command.CAPS, 1.4F), commandKey("ABC", Command.SYMBOLS, 1.4F),
+            commandKey("Space", Command.SPACE, 3.0F), commandKey("Back", Command.BACKSPACE, 1.5F),
+            commandKey("Enter", Command.ENTER, 1.5F), commandKey("Done", Command.DONE, 1.4F) } };
 
     private OnScreenKeyboardLayout() {}
 

@@ -13,9 +13,7 @@ public class ModKeyBindingIdentifierTest {
         String second = ModKeyBindingIdentifier.create("key.categories.ae2", "key.ae2.search", 2);
 
         assertNotEquals(first, second);
-        assertEquals(
-            ModKeyBindingIdentifier.base("key.categories.ae2", "key.ae2.search") + '\u001F' + "1",
-            first);
+        assertEquals(ModKeyBindingIdentifier.base("key.categories.ae2", "key.ae2.search") + '\u001F' + "1", first);
     }
 
     @Test(expected = IllegalArgumentException.class)

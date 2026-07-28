@@ -3,9 +3,9 @@ package dev.gtnhcontroller.client;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import dev.gtnhcontroller.Config;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 public final class ControllerDebugOverlay {
 

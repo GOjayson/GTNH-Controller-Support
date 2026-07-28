@@ -26,9 +26,9 @@ import net.minecraft.util.MovementInput;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import dev.gtnhcontroller.Config;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
+import dev.gtnhcontroller.Config;
 
 /**
  * Translates the active controller profile into conservative vanilla Minecraft gameplay controls. GUI input is kept
@@ -104,8 +104,7 @@ public final class GameplayController {
         if (controllerProfile.wasPressed(OPEN_INVENTORY)) {
             releaseControlledBindings(minecraft);
             minecraft.getNetHandler()
-                .addToSendQueue(
-                    new C16PacketClientStatus(C16PacketClientStatus.EnumState.OPEN_INVENTORY_ACHIEVEMENT));
+                .addToSendQueue(new C16PacketClientStatus(C16PacketClientStatus.EnumState.OPEN_INVENTORY_ACHIEVEMENT));
             minecraft.displayGuiScreen(new GuiInventory(minecraft.thePlayer));
             return;
         }
@@ -138,13 +137,10 @@ public final class GameplayController {
             autoSwimDryTicks = 0;
         }
 
-        boolean autoSwimContext = toggleSwim
-            && (inWater || autoSwimUp || autoSwimSuppressJumpUntilRelease);
+        boolean autoSwimContext = toggleSwim && (inWater || autoSwimUp || autoSwimSuppressJumpUntilRelease);
         boolean controllerJump = autoSwimContext ? autoSwimUp : jumpDown || shouldAutoJump(minecraft.thePlayer);
-        boolean controllerSneak = sneakActivation.update(
-            Config.sneakActivationMode,
-            controllerProfile.isDown(SNEAK),
-            controllerProfile.wasPressed(SNEAK));
+        boolean controllerSneak = sneakActivation
+            .update(Config.sneakActivationMode, controllerProfile.isDown(SNEAK), controllerProfile.wasPressed(SNEAK));
         boolean controllerSprint = sprintActivation.update(
             Config.sprintActivationMode,
             controllerProfile.isDown(SPRINT),
@@ -153,10 +149,8 @@ public final class GameplayController {
             Config.attackActivationMode,
             controllerProfile.isDown(ATTACK),
             controllerProfile.wasPressed(ATTACK));
-        boolean controllerUse = useActivation.update(
-            Config.useActivationMode,
-            controllerProfile.isDown(USE),
-            controllerProfile.wasPressed(USE));
+        boolean controllerUse = useActivation
+            .update(Config.useActivationMode, controllerProfile.isDown(USE), controllerProfile.wasPressed(USE));
         jumpHeld = updateBinding(minecraft.gameSettings.keyBindJump, jumpHeld, controllerJump);
         sneakHeld = updateBinding(minecraft.gameSettings.keyBindSneak, sneakHeld, controllerSneak);
         sprintHeld = controllerSprint;
@@ -177,9 +171,7 @@ public final class GameplayController {
             return;
         }
 
-        movementInput.sneak = MovementAssistance.mergeSneak(
-            movementInput.sneak,
-            sneakHeld);
+        movementInput.sneak = MovementAssistance.mergeSneak(movementInput.sneak, sneakHeld);
         StickVector movement = InputMath.applyMovementResponse(movementStick(), Config.moveSensitivity);
         float forward = -movement.y;
         float strafe = -movement.x;
@@ -245,8 +237,7 @@ public final class GameplayController {
             return;
         }
 
-        if (sprintControllerOwned
-            && minecraft.thePlayer != null
+        if (sprintControllerOwned && minecraft.thePlayer != null
             && !isPhysicalInputDown(minecraft.gameSettings.keyBindSprint)) {
             minecraft.thePlayer.setSprinting(false);
         }
@@ -271,16 +262,15 @@ public final class GameplayController {
     }
 
     private void updateSprint(EntityPlayer player, MovementInput movementInput) {
-        boolean canStart = movementInput.moveForward >= 0.8F
-            && !movementInput.sneak
+        boolean canStart = movementInput.moveForward >= 0.8F && !movementInput.sneak
             && !player.isCollidedHorizontally
             && player.ridingEntity == null
             && !player.isUsingItem()
             && (player.getFoodStats()
                 .getFoodLevel() > 6 || player.capabilities.allowFlying)
             && !player.isPotionActive(Potion.blindness);
-        SprintControl.Decision decision =
-            SprintControl.decide(Config.sprintActivationMode, sprintHeld, sprintControllerOwned, canStart);
+        SprintControl.Decision decision = SprintControl
+            .decide(Config.sprintActivationMode, sprintHeld, sprintControllerOwned, canStart);
         switch (decision) {
             case START:
                 player.setSprinting(true);

@@ -12,10 +12,8 @@ public class DirectionalNavigationTest {
 
     @Test
     public void selectsNearestTargetInRequestedDirection() {
-        List<GuiNavigationTarget> targets = Arrays.asList(
-            new GuiNavigationTarget(50, 20),
-            new GuiNavigationTarget(50, 40),
-            new GuiNavigationTarget(50, 80));
+        List<GuiNavigationTarget> targets = Arrays
+            .asList(new GuiNavigationTarget(50, 20), new GuiNavigationTarget(50, 40), new GuiNavigationTarget(50, 80));
 
         GuiNavigationTarget result = DirectionalNavigation.findNext(50, 50, 0, -1, targets);
 

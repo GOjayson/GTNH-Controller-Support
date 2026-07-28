@@ -2,6 +2,8 @@ package dev.gtnhcontroller;
 
 import net.minecraftforge.common.MinecraftForge;
 
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.event.FMLInitializationEvent;
 import dev.gtnhcontroller.client.ControllerDebugOverlay;
 import dev.gtnhcontroller.client.gui.ControllerControlsEntry;
 import dev.gtnhcontroller.client.gui.GuiController;
@@ -10,8 +12,6 @@ import dev.gtnhcontroller.client.input.ControllerProfile;
 import dev.gtnhcontroller.client.input.GameplayController;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
 
 public final class ClientProxy extends CommonProxy {
 

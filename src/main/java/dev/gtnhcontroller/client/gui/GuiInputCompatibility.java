@@ -100,38 +100,32 @@ final class GuiInputCompatibility {
          * NEI's focused TextField is not a field on the GuiContainer. Calling the focused widget directly preserves
          * TextField.onTextChange, which refreshes NEI's item filter after each on-screen-keyboard character.
          */
-        if (neiFocusedTextDispatcher != null
-            && neiFocusedTextDispatcher.dispatch(screen, typedCharacter, keyCode)) {
+        if (neiFocusedTextDispatcher != null && neiFocusedTextDispatcher.dispatch(screen, typedCharacter, keyCode)) {
             return;
         }
-        if (neiKeyboardDispatcher != null
-            && neiKeyboardDispatcher.dispatch(screen, typedCharacter, keyCode)) {
+        if (neiKeyboardDispatcher != null && neiKeyboardDispatcher.dispatch(screen, typedCharacter, keyCode)) {
             return;
         }
         dispatchToScreen(screen, typedCharacter, keyCode);
     }
 
     private void dispatchToScreen(GuiScreen screen, char typedCharacter, int keyCode) {
-        ((GuiScreenControllerKeyDispatcher) (Object) screen)
-            .gtnhcontroller$dispatchKeyTyped(typedCharacter, keyCode);
+        ((GuiScreenControllerKeyDispatcher) (Object) screen).gtnhcontroller$dispatchKeyTyped(typedCharacter, keyCode);
     }
 
     private boolean scrollCreativeInventory(GuiContainerCreative screen, int direction) {
-        GuiContainerCreativeControllerAccessor accessor =
-            (GuiContainerCreativeControllerAccessor) (Object) screen;
+        GuiContainerCreativeControllerAccessor accessor = (GuiContainerCreativeControllerAccessor) (Object) screen;
         if (!accessor.gtnhcontroller$needsScrollBars()
             || !(screen.inventorySlots instanceof CreativeContainerControllerAccessor)) {
             return true;
         }
 
-        CreativeContainerControllerAccessor container =
-            (CreativeContainerControllerAccessor) screen.inventorySlots;
-        float scrollPosition = CreativeInventoryScroll
-            .nextPosition(
-                accessor.gtnhcontroller$getCurrentScroll(),
-                container.gtnhcontroller$getItemList()
-                    .size(),
-                direction);
+        CreativeContainerControllerAccessor container = (CreativeContainerControllerAccessor) screen.inventorySlots;
+        float scrollPosition = CreativeInventoryScroll.nextPosition(
+            accessor.gtnhcontroller$getCurrentScroll(),
+            container.gtnhcontroller$getItemList()
+                .size(),
+            direction);
         accessor.gtnhcontroller$setCurrentScroll(scrollPosition);
         container.gtnhcontroller$scrollTo(scrollPosition);
         return true;
@@ -144,8 +138,10 @@ final class GuiInputCompatibility {
 
         GuiSlot worldList = findGuiSlot(screen);
         if (worldList == null) {
-            GTNHController.LOG.warn("Could not locate the world list on {}", screen.getClass()
-                .getName());
+            GTNHController.LOG.warn(
+                "Could not locate the world list on {}",
+                screen.getClass()
+                    .getName());
             return;
         }
 
@@ -155,8 +151,7 @@ final class GuiInputCompatibility {
         }
 
         long currentTimeMillis = System.currentTimeMillis();
-        boolean doubleClick = worldList == lastWorldList
-            && worldIndex == lastWorldIndex
+        boolean doubleClick = worldList == lastWorldList && worldIndex == lastWorldIndex
             && mouseButton == lastWorldButton
             && currentTimeMillis - lastWorldClickMillis < DOUBLE_CLICK_MILLIS;
         ((GuiSlotControllerAccessor) (Object) worldList)
@@ -169,8 +164,8 @@ final class GuiInputCompatibility {
     }
 
     private GuiSlot findGuiSlot(GuiScreen screen) {
-        for (Class<?> type = screen.getClass(); type != null && GuiScreen.class.isAssignableFrom(type);
-            type = type.getSuperclass()) {
+        for (Class<?> type = screen.getClass(); type != null
+            && GuiScreen.class.isAssignableFrom(type); type = type.getSuperclass()) {
             for (Field field : type.getDeclaredFields()) {
                 if (!GuiSlot.class.isAssignableFrom(field.getType())) {
                     continue;
@@ -201,8 +196,12 @@ final class GuiInputCompatibility {
             method.invoke(screen, mouseX, mouseY, mouseButton);
             return true;
         } catch (NoSuchMethodException | IllegalAccessException exception) {
-            GTNHController.LOG.warn("Could not dispatch {} to {}", methodName, screen.getClass()
-                .getName(), exception);
+            GTNHController.LOG.warn(
+                "Could not dispatch {} to {}",
+                methodName,
+                screen.getClass()
+                    .getName(),
+                exception);
         } catch (InvocationTargetException exception) {
             GTNHController.LOG.warn("BetterQuesting rejected controller {}", methodName, exception.getCause());
         }
@@ -252,8 +251,7 @@ final class GuiInputCompatibility {
                     return null;
                 }
                 Method focusedMethod = textFieldClass.getMethod("focused");
-                Method handleKeyPressMethod =
-                    widgetClass.getMethod("handleKeyPress", Integer.TYPE, Character.TYPE);
+                Method handleKeyPressMethod = widgetClass.getMethod("handleKeyPress", Integer.TYPE, Character.TYPE);
                 return new NeiFocusedTextDispatcher(
                     getInputFocusedMethod,
                     searchField,
@@ -273,8 +271,7 @@ final class GuiInputCompatibility {
             }
 
             try {
-                Object focusedWidget =
-                    getInputFocusedMethod == null ? null : getInputFocusedMethod.invoke(null);
+                Object focusedWidget = getInputFocusedMethod == null ? null : getInputFocusedMethod.invoke(null);
                 if (focusedWidget == null && searchField != null) {
                     Object candidate = searchField.get(null);
                     if (candidate != null && Boolean.TRUE.equals(focusedMethod.invoke(candidate))) {
@@ -330,8 +327,8 @@ final class GuiInputCompatibility {
 
         static NeiKeyboardDispatcher create() {
             try {
-                Class<?> managerClass =
-                    Class.forName(MANAGER_CLASS, false, GuiInputCompatibility.class.getClassLoader());
+                Class<?> managerClass = Class
+                    .forName(MANAGER_CLASS, false, GuiInputCompatibility.class.getClassLoader());
                 Method getManagerMethod = managerClass.getMethod("getManager", GuiContainer.class);
                 Method keyTypedMethod = managerClass.getMethod("keyTyped", Character.TYPE, Integer.TYPE);
                 return new NeiKeyboardDispatcher(getManagerMethod, keyTypedMethod);

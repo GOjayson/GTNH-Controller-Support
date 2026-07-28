@@ -4,12 +4,12 @@ import static dev.gtnhcontroller.client.input.ControllerAction.RADIAL_MENU;
 
 import net.minecraft.client.Minecraft;
 
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 import dev.gtnhcontroller.Config;
 import dev.gtnhcontroller.client.input.ControllerProfile;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
 
 public final class RadialMenuController {
 
@@ -32,8 +32,8 @@ public final class RadialMenuController {
 
         Minecraft minecraft = Minecraft.getMinecraft();
         if (canOpen(minecraft) && controllerProfile.wasPressed(RADIAL_MENU)) {
-            minecraft.displayGuiScreen(
-                new GuiRadialMenuScreen(gamepadManager, controllerProfile, keyBindingController));
+            minecraft
+                .displayGuiScreen(new GuiRadialMenuScreen(gamepadManager, controllerProfile, keyBindingController));
         }
     }
 

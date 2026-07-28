@@ -52,13 +52,7 @@ public final class GuiControllerSettingsScreen extends GuiScreen implements Cont
         buttonList.add(
             new GuiButton(TOGGLE_GUI, centerX + 5, 52, 150, 20, toggleLabel("GUI Controls", Config.enableGuiControls)));
         buttonList.add(
-            new GuiButton(
-                TOGGLE_AUTO_JUMP,
-                centerX - 155,
-                78,
-                310,
-                20,
-                toggleLabel("Auto Jump", Config.autoJump)));
+            new GuiButton(TOGGLE_AUTO_JUMP, centerX - 155, 78, 310, 20, toggleLabel("Auto Jump", Config.autoJump)));
         buttonList.add(new GuiButton(GAMEPLAY_BINDINGS, centerX - 155, 104, 230, 20, "Gameplay Bindings..."));
         buttonList.add(new GuiButton(ACTIVATION_MODES, centerX + 80, 104, 75, 20, "Modes..."));
         buttonList.add(new GuiButton(GUI_BINDINGS, centerX - 155, 130, 310, 20, "GUI Bindings..."));

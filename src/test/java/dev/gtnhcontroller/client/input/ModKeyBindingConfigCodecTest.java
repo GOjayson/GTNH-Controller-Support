@@ -13,9 +13,7 @@ public class ModKeyBindingConfigCodecTest {
     @Test
     public void roundTripPreservesIdentifiersAndControllerBindings() {
         Map<String, String> bindings = new LinkedHashMap<String, String>();
-        bindings.put(
-            ModKeyBindingIdentifier.create("key.categories.ae2", "key.ae2.search", 1),
-            "BUTTON:WEST");
+        bindings.put(ModKeyBindingIdentifier.create("key.categories.ae2", "key.ae2.search", 1), "BUTTON:WEST");
         bindings.put(
             ModKeyBindingIdentifier.create("key.categories.backpack", "key.open_backpack", 1),
             "TRIGGER:LEFT_TRIGGER");
@@ -43,8 +41,8 @@ public class ModKeyBindingConfigCodecTest {
         bindings.put("valid", "BUTTON:EAST");
         String validEntry = ModKeyBindingConfigCodec.encode(bindings)[0];
 
-        Map<String, String> decoded = ModKeyBindingConfigCodec.decode(
-            new String[] { "*=BUTTON:SOUTH", "missing-delimiter", validEntry });
+        Map<String, String> decoded = ModKeyBindingConfigCodec
+            .decode(new String[] { "*=BUTTON:SOUTH", "missing-delimiter", validEntry });
 
         assertEquals(1, decoded.size());
         assertEquals("BUTTON:EAST", decoded.get("valid"));

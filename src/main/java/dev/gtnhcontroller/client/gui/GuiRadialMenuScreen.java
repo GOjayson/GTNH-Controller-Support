@@ -58,10 +58,8 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
     @Override
     public void updateScreen() {
         super.updateScreen();
-        int stickSelection = RadialMenuSelection.select(
-            gamepadManager.getAxis(RIGHT_X),
-            gamepadManager.getAxis(RIGHT_Y),
-            SELECTION_THRESHOLD);
+        int stickSelection = RadialMenuSelection
+            .select(gamepadManager.getAxis(RIGHT_X), gamepadManager.getAxis(RIGHT_Y), SELECTION_THRESHOLD);
         int dPadSelection = RadialMenuSelection.selectDPad(
             gamepadManager.isButtonDown(DPAD_UP),
             gamepadManager.isButtonDown(DPAD_DOWN),

@@ -31,8 +31,8 @@ final class OnScreenKeyboardOverlay {
     private static final int KEY_HEIGHT = 19;
     private static final int KEY_GAP = 2;
 
-    private final Map<ControllerAction, InputRepeatTimer> repeatTimers =
-        new EnumMap<ControllerAction, InputRepeatTimer>(ControllerAction.class);
+    private final Map<ControllerAction, InputRepeatTimer> repeatTimers = new EnumMap<ControllerAction, InputRepeatTimer>(
+        ControllerAction.class);
     private final GuiInputCompatibility inputCompatibility;
 
     private GuiScreen targetScreen;
@@ -135,12 +135,7 @@ final class OnScreenKeyboardOverlay {
 
         String help = "D-pad Move  A Type  B Backspace  X Caps  Y Done";
         help = fontRenderer.trimStringToWidth(help, Math.max(panelWidth - PANEL_PADDING * 2, 1));
-        drawCentered(
-            fontRenderer,
-            help,
-            screen.width / 2,
-            firstRowTop + rowsHeight + 5,
-            0xB0B0B0);
+        drawCentered(fontRenderer, help, screen.width / 2, firstRowTop + rowsHeight + 5, 0xB0B0B0);
 
         GL11.glPopMatrix();
         GL11.glPopAttrib();
@@ -165,7 +160,11 @@ final class OnScreenKeyboardOverlay {
 
             Gui.drawRect(left, top, right, top + KEY_HEIGHT, backgroundColor);
             String label = fontRenderer.trimStringToWidth(key.getLabel(caps), Math.max(right - left - 4, 1));
-            drawCentered(fontRenderer, label, (left + right) / 2, top + (KEY_HEIGHT - fontRenderer.FONT_HEIGHT) / 2,
+            drawCentered(
+                fontRenderer,
+                label,
+                (left + right) / 2,
+                top + (KEY_HEIGHT - fontRenderer.FONT_HEIGHT) / 2,
                 textColor);
         }
     }

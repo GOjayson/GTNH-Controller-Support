@@ -196,13 +196,8 @@ public final class Config {
             "gui",
             enableGuiControls,
             "Enable controller cursor and button input while a GUI is open.");
-        cursorSensitivity = configuration.getFloat(
-            "cursorSensitivity",
-            "gui",
-            cursorSensitivity,
-            0.25F,
-            5.0F,
-            "Scales controller cursor speed.");
+        cursorSensitivity = configuration
+            .getFloat("cursorSensitivity", "gui", cursorSensitivity, 0.25F, 5.0F, "Scales controller cursor speed.");
         cursorStick = configuration.getString(
             "cursorStick",
             "gui",
@@ -603,11 +598,8 @@ public final class Config {
         ActivationMode parsedValue = ActivationMode.parse(configuredValue, defaultValue);
         if (!parsedValue.name()
             .equalsIgnoreCase(configuredValue.trim())) {
-            GTNHController.LOG.warn(
-                "Invalid activation mode '{}' for {}. Falling back to {}.",
-                configuredValue,
-                name,
-                defaultValue);
+            GTNHController.LOG
+                .warn("Invalid activation mode '{}' for {}. Falling back to {}.", configuredValue, name, defaultValue);
             configuration.get("activationModes", name, defaultValue.name())
                 .set(defaultValue.name());
         }

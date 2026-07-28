@@ -205,8 +205,12 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
             if (category.key != null && !category.key.equals(binding.getCategoryKey())) {
                 continue;
             }
-            String searchableText = (binding.getCategoryName() + " " + binding.getDisplayName() + " "
-                + binding.getCategoryKey() + " " + binding.getDescriptionKey()).toLowerCase(Locale.ROOT);
+            String searchableText = (binding.getCategoryName() + " "
+                + binding.getDisplayName()
+                + " "
+                + binding.getCategoryKey()
+                + " "
+                + binding.getDescriptionKey()).toLowerCase(Locale.ROOT);
             if (query.isEmpty() || searchableText.contains(query)) {
                 filteredBindings.add(binding);
             }

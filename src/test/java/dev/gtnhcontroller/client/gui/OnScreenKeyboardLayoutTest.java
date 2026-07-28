@@ -12,9 +12,8 @@ public class OnScreenKeyboardLayoutTest {
 
     @Test
     public void containsCharactersNeededForSearchChatNamesAndAddresses() {
-        String requiredCharacters =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-                + "!@#$%^&*()-_=+[]{}\\|;:'\",.<>?/`~";
+        String requiredCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            + "!@#$%^&*()-_=+[]{}\\|;:'\",.<>?/`~";
 
         for (int index = 0; index < requiredCharacters.length(); index++) {
             char character = requiredCharacters.charAt(index);
@@ -34,8 +33,7 @@ public class OnScreenKeyboardLayoutTest {
 
     @Test
     public void exposesEveryTextEditingCommand() {
-        Set<OnScreenKeyboardLayout.Command> commands =
-            EnumSet.noneOf(OnScreenKeyboardLayout.Command.class);
+        Set<OnScreenKeyboardLayout.Command> commands = EnumSet.noneOf(OnScreenKeyboardLayout.Command.class);
         for (OnScreenKeyboardLayout.Key[] row : OnScreenKeyboardLayout.getRows(false)) {
             for (OnScreenKeyboardLayout.Key key : row) {
                 commands.add(key.getCommand());

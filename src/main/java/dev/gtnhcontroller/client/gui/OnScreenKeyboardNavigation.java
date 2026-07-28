@@ -15,8 +15,7 @@ final class OnScreenKeyboardNavigation {
 
     private OnScreenKeyboardNavigation() {}
 
-    static Position move(int row, int column, int directionX, int directionY,
-        OnScreenKeyboardLayout.Key[][] rows) {
+    static Position move(int row, int column, int directionX, int directionY, OnScreenKeyboardLayout.Key[][] rows) {
         int clampedRow = clamp(row, 0, rows.length - 1);
         int clampedColumn = clamp(column, 0, rows[clampedRow].length - 1);
         if (directionX != 0) {

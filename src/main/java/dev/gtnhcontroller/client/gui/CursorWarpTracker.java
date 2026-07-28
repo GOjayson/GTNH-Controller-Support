@@ -23,8 +23,8 @@ final class CursorWarpTracker {
         active = true;
     }
 
-    boolean isPhysicalMovement(boolean controllerOwnsCursor, boolean controllerCursorMoving, int currentX,
-        int currentY, int previousX, int previousY) {
+    boolean isPhysicalMovement(boolean controllerOwnsCursor, boolean controllerCursorMoving, int currentX, int currentY,
+        int previousX, int previousY) {
         boolean positionChanged = currentX != previousX || currentY != previousY;
         if (controllerOwnsCursor && controllerCursorMoving) {
             return false;
