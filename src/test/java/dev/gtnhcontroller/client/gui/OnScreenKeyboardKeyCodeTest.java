@@ -3,8 +3,9 @@ package dev.gtnhcontroller.client.gui;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import org.junit.Test;
 import org.lwjgl.input.Keyboard;
+
+import org.junit.Test;
 
 public class OnScreenKeyboardKeyCodeTest {
 

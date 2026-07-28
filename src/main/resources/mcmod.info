@@ -9,7 +9,7 @@
       "mcversion": "${minecraftVersion}",
       "url": "https://github.com/GOjayson/GTNH-Controller-Support",
       "updateUrl": "",
-      "authorList": ["GOjayson"],
+      "authorList": ["Jayson Gorissen"],
       "credits": "Built from GTNewHorizons/ExampleMod1.7.10 and lwjgl3ify's SDL3 bindings. Controller UX is informed by MrCrayfish's Controllable.",
       "logoFile": "",
       "screenshots": [],

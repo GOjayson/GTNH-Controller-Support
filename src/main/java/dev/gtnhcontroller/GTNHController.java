@@ -20,7 +20,9 @@ public final class GTNHController {
     public static final String NAME = "GTNH Controller Support";
     public static final Logger LOG = LogManager.getLogger(MODID);
 
-    @SidedProxy(clientSide = "dev.gtnhcontroller.ClientProxy", serverSide = "dev.gtnhcontroller.CommonProxy")
+    @SidedProxy(
+        clientSide = "dev.gtnhcontroller.ClientProxy",
+        serverSide = "dev.gtnhcontroller.CommonProxy")
     public static CommonProxy proxy;
 
     @Mod.EventHandler

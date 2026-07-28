@@ -3,11 +3,11 @@ package dev.gtnhcontroller.client.input;
 import java.util.EnumMap;
 import java.util.Map;
 
+import dev.gtnhcontroller.Config;
+import dev.gtnhcontroller.GTNHController;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
-import dev.gtnhcontroller.Config;
-import dev.gtnhcontroller.GTNHController;
 
 /**
  * Resolves configured action bindings and takes one stable action-state snapshot per client tick.

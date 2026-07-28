@@ -5,10 +5,10 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiControls;
 import net.minecraftforge.client.event.GuiScreenEvent;
 
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import dev.gtnhcontroller.client.input.ControllerProfile;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 /**
  * Adds a controller-settings entry without squeezing the existing bottom-row buttons.
@@ -63,10 +63,20 @@ public final class ControllerControlsEntry {
             }
         }
 
-        ControllerButtonPlacement.Position position = ControllerButtonPlacement
-            .choose(event.gui.width, leftOptionEdge, rightOptionEdge, topOptionY, event.gui.height - 53);
+        ControllerButtonPlacement.Position position = ControllerButtonPlacement.choose(
+            event.gui.width,
+            leftOptionEdge,
+            rightOptionEdge,
+            topOptionY,
+            event.gui.height - 53);
         event.buttonList.add(
-            new GuiButton(CONTROLLER_SETTINGS_BUTTON, position.x, position.y, position.width, 20, "Controller..."));
+            new GuiButton(
+                CONTROLLER_SETTINGS_BUTTON,
+                position.x,
+                position.y,
+                position.width,
+                20,
+                "Controller..."));
     }
 
     @SubscribeEvent
@@ -78,7 +88,11 @@ public final class ControllerControlsEntry {
         event.setCanceled(true);
         Minecraft.getMinecraft()
             .displayGuiScreen(
-                new GuiControllerSettingsScreen(event.gui, gamepadManager, controllerProfile, modKeyBindingController));
+                new GuiControllerSettingsScreen(
+                    event.gui,
+                    gamepadManager,
+                    controllerProfile,
+                    modKeyBindingController));
     }
 
     private static boolean isUpperOptionCandidate(GuiButton button, int screenHeight) {

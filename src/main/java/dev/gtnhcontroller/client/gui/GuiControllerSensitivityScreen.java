@@ -94,7 +94,12 @@ public final class GuiControllerSensitivityScreen extends GuiScreen implements C
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
         drawCenteredString(fontRendererObj, "Controller Sensitivity", width / 2, 16, 0xFFFFFF);
-        drawCenteredString(fontRendererObj, "Changes are saved and applied immediately", width / 2, 32, 0xA0A0A0);
+        drawCenteredString(
+            fontRendererObj,
+            "Changes are saved and applied immediately",
+            width / 2,
+            32,
+            0xA0A0A0);
 
         drawString(fontRendererObj, "Movement Response", width / 2 - 150, 64, 0xFFFFFF);
         drawString(fontRendererObj, "Camera", width / 2 - 150, 90, 0xFFFFFF);

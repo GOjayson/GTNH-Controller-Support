@@ -57,9 +57,7 @@ public final class ModKeyBindingConfigCodec {
         List<String> serializedEntries = new ArrayList<String>();
         for (String identifier : identifiers) {
             String binding = bindings.get(identifier);
-            if (identifier == null || identifier.isEmpty()
-                || binding == null
-                || binding.isEmpty()
+            if (identifier == null || identifier.isEmpty() || binding == null || binding.isEmpty()
                 || "NONE".equalsIgnoreCase(binding)) {
                 continue;
             }

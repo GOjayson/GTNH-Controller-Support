@@ -22,7 +22,8 @@ final class DirectionalNavigation {
             }
 
             int crossDistance = deltaX * directionY - deltaY * directionX;
-            float score = forwardDistance * forwardDistance + CROSS_AXIS_WEIGHT * crossDistance * crossDistance;
+            float score = forwardDistance * forwardDistance
+                + CROSS_AXIS_WEIGHT * crossDistance * crossDistance;
             if (score < bestScore) {
                 bestTarget = target;
                 bestScore = score;

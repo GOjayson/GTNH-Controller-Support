@@ -18,13 +18,13 @@ import net.minecraft.util.ScreenShotHelper;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
+import dev.gtnhcontroller.Config;
+import dev.gtnhcontroller.GTNHController;
+import dev.gtnhcontroller.mixins.KeyBindingControllerAccessor;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
-import dev.gtnhcontroller.Config;
-import dev.gtnhcontroller.GTNHController;
-import dev.gtnhcontroller.mixins.KeyBindingControllerAccessor;
 
 /**
  * Applies controller buttons directly to the exact KeyBinding objects registered by Minecraft and installed mods.
@@ -35,8 +35,8 @@ public final class ModKeyBindingController {
     private final SdlGamepadManager gamepadManager;
     private final List<RegisteredKeyBinding> registeredBindings = new ArrayList<RegisteredKeyBinding>();
     private final Map<String, BindingState> states = new LinkedHashMap<String, BindingState>();
-    private final Set<KeyBinding> pendingPulseReleases = Collections
-        .newSetFromMap(new IdentityHashMap<KeyBinding, Boolean>());
+    private final Set<KeyBinding> pendingPulseReleases =
+        Collections.newSetFromMap(new IdentityHashMap<KeyBinding, Boolean>());
 
     private KeyBinding[] observedKeyBindings = new KeyBinding[0];
 
@@ -116,7 +116,8 @@ public final class ModKeyBindingController {
         GameSettings settings = minecraft.gameSettings;
         KeyBinding binding = entry.getKeyBinding();
         if (binding == settings.keyBindScreenshot) {
-            minecraft.ingameGUI.getChatGUI()
+            minecraft.ingameGUI
+                .getChatGUI()
                 .printChatMessage(
                     ScreenShotHelper.saveScreenshot(
                         minecraft.mcDataDir,
@@ -199,8 +200,8 @@ public final class ModKeyBindingController {
             String categoryKey = safeTranslationKey(keyBinding.getKeyCategory());
             String descriptionKey = safeTranslationKey(keyBinding.getKeyDescription());
             String identifierBase = ModKeyBindingIdentifier.base(categoryKey, descriptionKey);
-            int occurrence = occurrences.containsKey(identifierBase) ? occurrences.get(identifierBase)
-                .intValue() + 1 : 1;
+            int occurrence = occurrences.containsKey(identifierBase) ? occurrences.get(identifierBase).intValue() + 1
+                : 1;
             occurrences.put(identifierBase, Integer.valueOf(occurrence));
 
             String identifier = ModKeyBindingIdentifier.create(categoryKey, descriptionKey, occurrence);

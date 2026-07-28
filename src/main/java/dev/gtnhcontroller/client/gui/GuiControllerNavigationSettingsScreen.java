@@ -7,7 +7,8 @@ import org.lwjgl.input.Keyboard;
 
 import dev.gtnhcontroller.Config;
 
-public final class GuiControllerNavigationSettingsScreen extends GuiScreen implements ControllerConfigurationScreen {
+public final class GuiControllerNavigationSettingsScreen extends GuiScreen
+    implements ControllerConfigurationScreen {
 
     private static final int TOGGLE_BUTTON_NAVIGATION = 1;
     private static final int TOGGLE_SLOT_NAVIGATION = 2;

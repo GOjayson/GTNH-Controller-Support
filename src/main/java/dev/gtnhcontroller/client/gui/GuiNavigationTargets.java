@@ -58,7 +58,11 @@ final class GuiNavigationTargets {
             if (!slot.func_111238_b()) {
                 continue;
             }
-            addIfOnScreen(screen, targets, guiLeft + slot.xDisplayPosition + 8, guiTop + slot.yDisplayPosition + 8);
+            addIfOnScreen(
+                screen,
+                targets,
+                guiLeft + slot.xDisplayPosition + 8,
+                guiTop + slot.yDisplayPosition + 8);
         }
     }
 

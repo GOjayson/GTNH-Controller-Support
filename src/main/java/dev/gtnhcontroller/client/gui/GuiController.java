@@ -29,9 +29,6 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
-import cpw.mods.fml.common.eventhandler.EventPriority;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
 import dev.gtnhcontroller.Config;
 import dev.gtnhcontroller.GTNHController;
 import dev.gtnhcontroller.client.input.ControllerAction;
@@ -40,6 +37,9 @@ import dev.gtnhcontroller.client.input.InputMath;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
 import dev.gtnhcontroller.client.input.StickVector;
 import dev.gtnhcontroller.mixins.GuiScreenControllerAccessor;
+import cpw.mods.fml.common.eventhandler.EventPriority;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 
 /**
  * Maintains a controller-owned cursor in scaled GUI coordinates. While the controller owns it, the native cursor is
@@ -55,8 +55,8 @@ public final class GuiController {
     private final NativeCursorManager nativeCursorManager = new NativeCursorManager();
     private final CursorWarpTracker cursorWarpTracker = new CursorWarpTracker();
     private final OnScreenKeyboardOverlay onScreenKeyboard = new OnScreenKeyboardOverlay(inputCompatibility);
-    private final Map<ControllerAction, InputRepeatTimer> repeatTimers = new EnumMap<ControllerAction, InputRepeatTimer>(
-        ControllerAction.class);
+    private final Map<ControllerAction, InputRepeatTimer> repeatTimers =
+        new EnumMap<ControllerAction, InputRepeatTimer>(ControllerAction.class);
     private final boolean useLeftStick;
 
     private GuiScreen activeScreen;
@@ -257,8 +257,10 @@ public final class GuiController {
         float fullCursorSpeed = Config.cursorSpeed * Config.cursorSensitivity;
         float effectiveCursorSpeed = fullCursorSpeed * precisionScale;
         float effectiveAcceleration = CursorMotion.responseRate(Config.cursorAcceleration, Config.cursorSensitivity);
-        float effectiveDeceleration = CursorMotion
-            .decelerationRate(Config.cursorDeceleration, Config.cursorSensitivity, fullCursorSpeed);
+        float effectiveDeceleration = CursorMotion.decelerationRate(
+            Config.cursorDeceleration,
+            Config.cursorSensitivity,
+            fullCursorSpeed);
         cursorVelocityX = CursorMotion.updateVelocity(
             cursorVelocityX,
             cursorInput.x * effectiveCursorSpeed * horizontalScale,

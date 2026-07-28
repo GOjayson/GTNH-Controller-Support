@@ -254,12 +254,8 @@ public final class GuiModKeyBindingScreen extends GuiScreen
             if (category.key != null && !category.key.equals(binding.getCategoryKey())) {
                 continue;
             }
-            String searchableText = (binding.getCategoryName() + " "
-                + binding.getDisplayName()
-                + " "
-                + binding.getCategoryKey()
-                + " "
-                + binding.getDescriptionKey()).toLowerCase(Locale.ROOT);
+            String searchableText = (binding.getCategoryName() + " " + binding.getDisplayName() + " "
+                + binding.getCategoryKey() + " " + binding.getDescriptionKey()).toLowerCase(Locale.ROOT);
             if (query.isEmpty() || searchableText.contains(query)) {
                 filteredBindings.add(binding);
             }
@@ -310,7 +306,8 @@ public final class GuiModKeyBindingScreen extends GuiScreen
             GuiButton previousButton = new GuiButton(PREVIOUS_PAGE, width / 2 - 155, height - 52, 70, 20, "< Previous");
             GuiButton nextButton = new GuiButton(NEXT_PAGE, width / 2 + 85, height - 52, 70, 20, "Next >");
             previousButton.enabled = page > 0 && captureBinding == null && !waitingForCapturedInputRelease;
-            nextButton.enabled = page < pageCount() - 1 && captureBinding == null && !waitingForCapturedInputRelease;
+            nextButton.enabled = page < pageCount() - 1 && captureBinding == null
+                && !waitingForCapturedInputRelease;
             buttonList.add(previousButton);
             buttonList.add(nextButton);
         }

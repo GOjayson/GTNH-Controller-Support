@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title description">
+  <title id="title">Radial menu screenshot placeholder</title>
+  <desc id="description">Replace with a screenshot of the radial menu.</desc>
+  <rect width="960" height="540" fill="#111820"/>
+  <rect x="24" y="24" width="912" height="492" rx="16" fill="#182630" stroke="#43d9d0" stroke-width="3"/>
+  <circle cx="480" cy="250" r="150" fill="#263b47" stroke="#6e8997" stroke-width="3"/>
+  <circle cx="480" cy="250" r="68" fill="#111820" stroke="#43d9d0" stroke-width="4"/>
+  <g fill="#43d9d0">
+    <circle cx="480" cy="122" r="17"/>
+    <circle cx="570" cy="160" r="17"/>
+    <circle cx="608" cy="250" r="17"/>
+    <circle cx="570" cy="340" r="17"/>
+    <circle cx="480" cy="378" r="17"/>
+    <circle cx="390" cy="340" r="17"/>
+    <circle cx="352" cy="250" r="17"/>
+    <circle cx="390" cy="160" r="17"/>
+  </g>
+  <text x="480" y="460" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="38" font-weight="700">Radial menu screenshot</text>
+  <text x="480" y="496" text-anchor="middle" fill="#a8bac4" font-family="Arial, sans-serif" font-size="23">Replace with the in-game radial menu</text>
+</svg>

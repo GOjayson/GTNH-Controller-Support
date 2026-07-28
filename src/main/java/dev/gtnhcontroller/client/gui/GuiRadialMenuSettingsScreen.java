@@ -18,8 +18,8 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
     private static final int NEXT_PAGE = 301;
     private static final int DONE = 302;
     private static final int SLOTS_PER_PAGE = 4;
-    private static final String[] SLOT_NAMES = { "Up", "Up-right", "Right", "Down-right", "Down", "Down-left", "Left",
-        "Up-left" };
+    private static final String[] SLOT_NAMES =
+        { "Up", "Up-right", "Right", "Down-right", "Down", "Down-left", "Left", "Up-left" };
 
     private final GuiScreen parentScreen;
     private final ModKeyBindingController keyBindingController;
@@ -64,10 +64,12 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
 
     @Override
     protected void actionPerformed(GuiButton button) {
-        if (button.id >= SLOT_BUTTON_BASE && button.id < SLOT_BUTTON_BASE + RadialMenuConfigCodec.SLOT_COUNT) {
+        if (button.id >= SLOT_BUTTON_BASE
+            && button.id < SLOT_BUTTON_BASE + RadialMenuConfigCodec.SLOT_COUNT) {
             int slot = button.id - SLOT_BUTTON_BASE;
             mc.displayGuiScreen(new GuiRadialMenuActionScreen(this, keyBindingController, slot));
-        } else if (button.id >= CLEAR_BUTTON_BASE && button.id < CLEAR_BUTTON_BASE + RadialMenuConfigCodec.SLOT_COUNT) {
+        } else if (button.id >= CLEAR_BUTTON_BASE
+            && button.id < CLEAR_BUTTON_BASE + RadialMenuConfigCodec.SLOT_COUNT) {
             Config.setRadialMenuEntry(button.id - CLEAR_BUTTON_BASE, "");
             Config.saveControllerSettings();
             initGui();

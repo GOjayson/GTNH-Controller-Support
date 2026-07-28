@@ -23,10 +23,10 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 import java.nio.IntBuffer;
 import java.util.Locale;
 
+import dev.gtnhcontroller.GTNHController;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
-import dev.gtnhcontroller.GTNHController;
 import me.eigenraven.lwjgl3ify.api.Lwjgl3Aware;
 
 /**

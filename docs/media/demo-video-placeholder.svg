@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">Gameplay demo video placeholder</title>
+  <desc id="description">Replace this graphic with a YouTube thumbnail and link.</desc>
+  <rect width="1280" height="720" fill="#111820"/>
+  <rect x="32" y="32" width="1216" height="656" rx="20" fill="#182630" stroke="#43d9d0" stroke-width="4"/>
+  <circle cx="640" cy="314" r="88" fill="#43d9d0"/>
+  <path d="M614 260 L614 368 L700 314 Z" fill="#111820"/>
+  <text x="640" y="465" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="48" font-weight="700">Gameplay demo coming soon</text>
+  <text x="640" y="520" text-anchor="middle" fill="#a8bac4" font-family="Arial, sans-serif" font-size="28">Replace with a YouTube thumbnail and link</text>
+</svg>
