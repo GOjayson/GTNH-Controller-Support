@@ -1,19 +1,14 @@
 # README media
 
-The SVG files in this directory are visible placeholders. Replace them with real screenshots or update the image paths
-in the root `README.md`.
+The root `README.md` displays these screenshots:
 
-Recommended captures:
+- `Contoller_Settings_Menu.png`: the main Controller Settings screen.
+- `Virtual-cursor.png`: the virtual cursor in an inventory or machine interface.
+- `Radial_Menu.png`: the radial action menu.
+- `Mod-Bindings-menu.png`: the searchable Minecraft and Mod Bindings screen.
 
-- `controller-settings.png`: the main Controller Settings screen.
-- `virtual-cursor.png`: an inventory or machine GUI with the cyan cursor and item tooltip.
-- `radial-menu.png`: the radial action menu with several assigned GTNH actions.
-- `mod-bindings.png`: the searchable Minecraft and Mod Bindings screen.
-- `demo-video-thumbnail.jpg`: a clear 16:9 thumbnail linked to the YouTube demonstration.
+`demo-video-placeholder.svg` remains in use until a demonstration video and thumbnail are available. For the final
+video, use a clear 1280 × 720 thumbnail linked to the YouTube demonstration.
 
-Recommended dimensions:
-
-- YouTube thumbnail: 1280 × 720.
-- Screenshots: native game resolution, preferably 1920 × 1080 or 1280 × 720.
-
-After uploading the video, replace the commented example in the root README with the real YouTube URL.
+Screenshots should use the native game resolution, preferably 1920 × 1080 or 1280 × 720, and must not expose server
+addresses, usernames, private chat or world coordinates.

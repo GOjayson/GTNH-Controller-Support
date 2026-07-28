@@ -10,6 +10,8 @@ I originally built this mod for my nephew, who has a muscle condition that makes
 difficult to use. It is shared publicly in the hope that it makes GTNH accessible to more players.
 
 > This is an independent community project, not an official GTNH mod.
+>
+> GTNH Controller Support is client-only. Do not install it on a dedicated server.
 
 ## Demo
 
@@ -22,13 +24,11 @@ YouTube video.
 
 ## Screenshots
 
-<!-- Replace these SVG files with real screenshots while keeping the filenames, or update the paths below. -->
-
 | Controller settings | Virtual cursor |
 | --- | --- |
-| ![Controller settings screenshot placeholder](docs/media/controller-settings-placeholder.svg) | ![Virtual cursor screenshot placeholder](docs/media/virtual-cursor-placeholder.svg) |
+| ![Controller settings menu](docs/media/Contoller_Settings_Menu.png) | ![Virtual cursor in a Minecraft interface](docs/media/Virtual-cursor.png) |
 | Radial menu | Mod bindings |
-| ![Radial menu screenshot placeholder](docs/media/radial-menu-placeholder.svg) | ![Mod bindings screenshot placeholder](docs/media/mod-bindings-placeholder.svg) |
+| ![Controller radial menu](docs/media/Radial_Menu.png) | ![Minecraft and mod bindings menu](docs/media/Mod-Bindings-menu.png) |
 
 ## Features
 
