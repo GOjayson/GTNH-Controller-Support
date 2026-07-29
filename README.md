@@ -34,10 +34,12 @@ YouTube video.
 
 - True analog movement and camera control with configurable dead zones, response curves and sensitivity.
 - Controller-driven cursor for menus, inventories, machine interfaces and BetterQuesting.
+- Controller panning and zooming for JourneyMap and Galacticraft's celestial map.
 - Rebindable gameplay and GUI actions, including SDL-exposed triggers, paddles and miscellaneous buttons.
 - Searchable bindings for registered Minecraft and mod actions.
 - Eight-direction radial menu for frequently used mod actions.
 - Directional GUI navigation, scrolling and a precision-cursor mode.
+- On-screen keyboard for focused vanilla, Creative inventory and NEI text fields.
 - Optional Auto Jump and Hold/Toggle swimming assistance.
 - Hold, Toggle and Press activation modes for Sneak, Sprint, Attack and Use.
 - Safe hand-off between controller, mouse and keyboard.
@@ -123,11 +125,10 @@ menu opens, focus is lost, gameplay controls are disabled or the controller disc
 
 ## Known limitations
 
-- The on-screen keyboard opens, navigates, switches layouts and sends Backspace, but printable characters do not
-  currently enter focused text fields in the tested GTNH 2.9 environment. It remains experimental.
 - Only the first detected SDL gamepad is used.
 - Multiple saved controller profiles and merged adaptive-controller inputs are not implemented yet.
-- Some custom mod GUIs or actions that bypass Minecraft's normal input APIs may need dedicated compatibility code.
+- Custom text widgets and mod GUIs that bypass Minecraft's normal input APIs may still need dedicated compatibility
+  code.
 
 Please report compatibility problems through
 [GitHub Issues](https://github.com/GOjayson/GTNH-Controller-Support/issues) and include the controller model, exact GTNH

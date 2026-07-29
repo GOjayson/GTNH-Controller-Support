@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiMultiplayer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiSelectWorld;
 import net.minecraft.client.gui.GuiSlot;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
 
@@ -22,8 +23,9 @@ import dev.gtnhcontroller.mixins.GuiSlotControllerAccessor;
  *
  * <p>
  * Vanilla's world list receives native mouse events through {@link GuiSlot}, while BetterQuesting dispatches them to
- * its own canvas API. The same adapters provide scrolling because Minecraft 1.7.10 has no common GUI scroll callback.
- * They intentionally stay narrow so a normal screen never receives the same input twice.
+ * its own canvas API. JourneyMap polls the physical mouse button for map dragging, and Galacticraft leaves a custom
+ * OpenGL/input state active in its celestial map. The same adapters provide scrolling because Minecraft 1.7.10 has no
+ * common GUI scroll callback. They intentionally stay narrow so a normal screen never receives the same input twice.
  */
 final class GuiInputCompatibility {
 
@@ -31,6 +33,8 @@ final class GuiInputCompatibility {
     private static final String BETTER_QUESTING_CONTAINER = "betterquesting.api2.client.gui.GuiContainerCanvas";
     private static final long DOUBLE_CLICK_MILLIS = 250L;
 
+    private final GalacticraftInputAdapter galacticraftInputAdapter = new GalacticraftInputAdapter();
+    private final JourneyMapInputAdapter journeyMapInputAdapter = new JourneyMapInputAdapter();
     private final NeiFocusedTextDispatcher neiFocusedTextDispatcher = NeiFocusedTextDispatcher.create();
     private final NeiKeyboardDispatcher neiKeyboardDispatcher = NeiKeyboardDispatcher.create();
 
@@ -64,10 +68,20 @@ final class GuiInputCompatibility {
             clickWorldList((GuiSelectWorld) screen, mouseX, mouseY, mouseButton);
         }
         invokeBetterQuesting(screen, "onMouseClick", mouseX, mouseY, mouseButton);
+        journeyMapInputAdapter.mousePressed(screen, mouseX, mouseY, mouseButton);
+    }
+
+    void mouseDragged(GuiScreen screen, int mouseX, int mouseY, int mouseButton, long heldTimeMillis) {
+        journeyMapInputAdapter.mouseDragged(screen, mouseX, mouseY, mouseButton);
+    }
+
+    void beforeMouseReleased(GuiScreen screen, int mouseX, int mouseY, int mouseButton) {
+        journeyMapInputAdapter.beforeMouseReleased(screen, mouseX, mouseY, mouseButton);
     }
 
     void mouseReleased(GuiScreen screen, int mouseX, int mouseY, int mouseButton) {
         invokeBetterQuesting(screen, "onMouseRelease", mouseX, mouseY, mouseButton);
+        journeyMapInputAdapter.mouseReleased(screen, mouseButton);
     }
 
     boolean scroll(GuiScreen screen, int mouseX, int mouseY, int direction) {
@@ -76,6 +90,9 @@ final class GuiInputCompatibility {
         }
         if (screen instanceof GuiContainerCreative) {
             return scrollCreativeInventory((GuiContainerCreative) screen, direction);
+        }
+        if (galacticraftInputAdapter.scroll(screen, direction)) {
+            return true;
         }
 
         GuiSlot guiSlot = findGuiSlot(screen);
@@ -93,7 +110,7 @@ final class GuiInputCompatibility {
          * before GuiContainerCreative can update the filtered item list.
          */
         if (screen instanceof GuiContainerCreative) {
-            dispatchToScreen(screen, typedCharacter, keyCode);
+            dispatchCreativeText((GuiContainerCreative) screen, typedCharacter, keyCode);
             return;
         }
         /*
@@ -103,14 +120,67 @@ final class GuiInputCompatibility {
         if (neiFocusedTextDispatcher != null && neiFocusedTextDispatcher.dispatch(screen, typedCharacter, keyCode)) {
             return;
         }
+
+        GuiTextField focusedTextField = findFocusedTextField(screen);
+        String previousText = focusedTextField == null ? null : focusedTextField.getText();
         if (neiKeyboardDispatcher != null && neiKeyboardDispatcher.dispatch(screen, typedCharacter, keyCode)) {
+            insertIfScreenIgnoredCharacter(focusedTextField, previousText, typedCharacter);
             return;
         }
+
         dispatchToScreen(screen, typedCharacter, keyCode);
+        insertIfScreenIgnoredCharacter(focusedTextField, previousText, typedCharacter);
     }
 
     private void dispatchToScreen(GuiScreen screen, char typedCharacter, int keyCode) {
         ((GuiScreenControllerKeyDispatcher) (Object) screen).gtnhcontroller$dispatchKeyTyped(typedCharacter, keyCode);
+    }
+
+    private void dispatchCreativeText(GuiContainerCreative screen, char typedCharacter, int keyCode) {
+        GuiContainerCreativeControllerAccessor accessor = (GuiContainerCreativeControllerAccessor) (Object) screen;
+        GuiTextField searchField = accessor.gtnhcontroller$getSearchField();
+        String previousText = searchField == null ? null : searchField.getText();
+
+        dispatchToScreen(screen, typedCharacter, keyCode);
+        if (searchField != null && searchField.isFocused()
+            && isPrintable(typedCharacter)
+            && previousText.equals(searchField.getText())) {
+            searchField.writeText(String.valueOf(typedCharacter));
+            accessor.gtnhcontroller$updateCreativeSearch();
+        }
+    }
+
+    private GuiTextField findFocusedTextField(GuiScreen screen) {
+        for (Class<?> type = screen.getClass(); type != null
+            && GuiScreen.class.isAssignableFrom(type); type = type.getSuperclass()) {
+            for (Field field : type.getDeclaredFields()) {
+                if (!GuiTextField.class.isAssignableFrom(field.getType())) {
+                    continue;
+                }
+
+                try {
+                    field.setAccessible(true);
+                    Object value = field.get(screen);
+                    if (value instanceof GuiTextField && ((GuiTextField) value).isFocused()) {
+                        return (GuiTextField) value;
+                    }
+                } catch (IllegalAccessException exception) {
+                    GTNHController.LOG.warn("Could not access focused text field {}", field.getName(), exception);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isPrintable(char typedCharacter) {
+        return typedCharacter != '\0' && !Character.isISOControl(typedCharacter);
+    }
+
+    private static void insertIfScreenIgnoredCharacter(GuiTextField textField, String previousText,
+        char typedCharacter) {
+        if (textField != null && isPrintable(typedCharacter) && previousText.equals(textField.getText())) {
+            textField.writeText(String.valueOf(typedCharacter));
+        }
     }
 
     private boolean scrollCreativeInventory(GuiContainerCreative screen, int direction) {
@@ -227,15 +297,21 @@ final class GuiInputCompatibility {
         private final Method getInputFocusedMethod;
         private final Field searchField;
         private final Method focusedMethod;
+        private final Method textMethod;
         private final Method handleKeyPressMethod;
+        private final Field internalTextField;
+        private final Method onTextChangeMethod;
         private boolean unavailable;
 
         private NeiFocusedTextDispatcher(Method getInputFocusedMethod, Field searchField, Method focusedMethod,
-            Method handleKeyPressMethod) {
+            Method textMethod, Method handleKeyPressMethod, Field internalTextField, Method onTextChangeMethod) {
             this.getInputFocusedMethod = getInputFocusedMethod;
             this.searchField = searchField;
             this.focusedMethod = focusedMethod;
+            this.textMethod = textMethod;
             this.handleKeyPressMethod = handleKeyPressMethod;
+            this.internalTextField = internalTextField;
+            this.onTextChangeMethod = onTextChangeMethod;
         }
 
         static NeiFocusedTextDispatcher create() {
@@ -251,15 +327,22 @@ final class GuiInputCompatibility {
                     return null;
                 }
                 Method focusedMethod = textFieldClass.getMethod("focused");
+                Method textMethod = textFieldClass.getMethod("text");
                 Method handleKeyPressMethod = widgetClass.getMethod("handleKeyPress", Integer.TYPE, Character.TYPE);
+                Field internalTextField = textFieldClass.getDeclaredField("field");
+                internalTextField.setAccessible(true);
+                Method onTextChangeMethod = textFieldClass.getMethod("onTextChange", String.class);
                 return new NeiFocusedTextDispatcher(
                     getInputFocusedMethod,
                     searchField,
                     focusedMethod,
-                    handleKeyPressMethod);
+                    textMethod,
+                    handleKeyPressMethod,
+                    internalTextField,
+                    onTextChangeMethod);
             } catch (ClassNotFoundException exception) {
                 return null;
-            } catch (NoSuchMethodException | LinkageError exception) {
+            } catch (NoSuchFieldException | NoSuchMethodException | LinkageError exception) {
                 GTNHController.LOG.warn("NEI is present but its focused text input bridge is incompatible", exception);
                 return null;
             }
@@ -282,9 +365,23 @@ final class GuiInputCompatibility {
                     return false;
                 }
 
-                return Boolean.TRUE.equals(
+                String previousText = (String) textMethod.invoke(focusedWidget);
+                boolean handled = Boolean.TRUE.equals(
                     handleKeyPressMethod
                         .invoke(focusedWidget, Integer.valueOf(keyCode), Character.valueOf(typedCharacter)));
+                String currentText = (String) textMethod.invoke(focusedWidget);
+                if (isPrintable(typedCharacter) && previousText.equals(currentText)) {
+                    Object internalField = internalTextField.get(focusedWidget);
+                    if (internalField instanceof GuiTextField) {
+                        ((GuiTextField) internalField).writeText(String.valueOf(typedCharacter));
+                        currentText = (String) textMethod.invoke(focusedWidget);
+                        if (!previousText.equals(currentText)) {
+                            onTextChangeMethod.invoke(focusedWidget, previousText);
+                            handled = true;
+                        }
+                    }
+                }
+                return handled;
             } catch (IllegalAccessException exception) {
                 unavailable = true;
                 GTNHController.LOG.warn("Could not access NEI's focused text input bridge", exception);

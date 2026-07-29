@@ -45,8 +45,8 @@ That screen may need a narrow compatibility adapter.
 
 ## Scrolling fails in one screen
 
-Minecraft 1.7.10 has no universal GUI scroll callback. The mod includes adapters for vanilla lists, BetterQuesting and
-Creative inventory. Record the exact unsupported screen so it can be investigated.
+Minecraft 1.7.10 has no universal GUI scroll callback. The mod includes adapters for vanilla lists, BetterQuesting,
+Creative inventory and Galacticraft's celestial map. Record the exact unsupported screen so it can be investigated.
 
 ## A registered mod action ignores the controller
 
@@ -60,10 +60,11 @@ controller mod deliberately refuses to activate a similarly named action.
 
 ## The on-screen keyboard does not type characters
 
-This is a confirmed version 1.0.0 limitation, not a setup mistake. Navigation, layout switching and Backspace work,
-but printable characters do not reach focused text fields in the tested GTNH 2.9 environment.
+Version 1.1.0 added focused-field input for vanilla, Creative inventory and NEI text boxes. Select the field with GUI
+Confirm before opening the keyboard. If only one custom mod field fails, that mod probably uses its own text widget and
+may need a compatibility adapter.
 
-Please add findings to the corresponding GitHub issue instead of opening duplicates.
+Include the exact screen, GTNH version and `latest.log` in the report.
 
 ## Minecraft does not start
 
@@ -95,5 +96,5 @@ release:
 ```powershell
 git add .
 git commit -m "Prepare release"
-git tag 1.0.0
+git tag 1.1.0
 ```

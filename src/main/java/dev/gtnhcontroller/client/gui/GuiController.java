@@ -203,7 +203,7 @@ public final class GuiController {
             return;
         }
 
-        drawVirtualCursor(cursorX(event.gui), cursorY(event.gui));
+        drawVirtualCursor(event.gui, cursorX(event.gui), cursorY(event.gui));
     }
 
     private void updateCursor(Minecraft minecraft, GuiScreen screen) {
@@ -312,6 +312,7 @@ public final class GuiController {
             if (!Mouse.isButtonDown(mouseButton)) {
                 int mouseX = cursorX(screen);
                 int mouseY = cursorY(screen);
+                inputCompatibility.beforeMouseReleased(screen, mouseX, mouseY, mouseButton);
                 if (!inputCompatibility.interceptMouseReleased(screen, mouseX, mouseY, mouseButton)) {
                     accessor(screen).gtnhcontroller$mouseMovedOrUp(mouseX, mouseY, mouseButton);
                 }
@@ -329,10 +330,14 @@ public final class GuiController {
         if (leftHeld) {
             accessor(activeScreen)
                 .gtnhcontroller$mouseClickMove(mouseX, mouseY, 0, currentTimeMillis - leftPressStartedMillis);
+            inputCompatibility
+                .mouseDragged(activeScreen, mouseX, mouseY, 0, currentTimeMillis - leftPressStartedMillis);
         }
         if (rightHeld) {
             accessor(activeScreen)
                 .gtnhcontroller$mouseClickMove(mouseX, mouseY, 1, currentTimeMillis - rightPressStartedMillis);
+            inputCompatibility
+                .mouseDragged(activeScreen, mouseX, mouseY, 1, currentTimeMillis - rightPressStartedMillis);
         }
     }
 
@@ -441,6 +446,7 @@ public final class GuiController {
         if (screen != null && leftHeld && (screenChanged || !Mouse.isButtonDown(0))) {
             int mouseX = cursorX(screen);
             int mouseY = cursorY(screen);
+            inputCompatibility.beforeMouseReleased(screen, mouseX, mouseY, 0);
             if (!inputCompatibility.interceptMouseReleased(screen, mouseX, mouseY, 0)) {
                 accessor(screen).gtnhcontroller$mouseMovedOrUp(mouseX, mouseY, 0);
             }
@@ -449,6 +455,7 @@ public final class GuiController {
         if (screen != null && rightHeld && (screenChanged || !Mouse.isButtonDown(1))) {
             int mouseX = cursorX(screen);
             int mouseY = cursorY(screen);
+            inputCompatibility.beforeMouseReleased(screen, mouseX, mouseY, 1);
             if (!inputCompatibility.interceptMouseReleased(screen, mouseX, mouseY, 1)) {
                 accessor(screen).gtnhcontroller$mouseMovedOrUp(mouseX, mouseY, 1);
             }
@@ -573,14 +580,20 @@ public final class GuiController {
         }
     }
 
-    private void drawVirtualCursor(int mouseX, int mouseY) {
+    private void drawVirtualCursor(GuiScreen screen, int mouseX, int mouseY) {
         int dark = 0xFF10242A;
         int light = 0xFF7FFFFF;
+        int previousMatrixMode = GL11.glGetInteger(GL11.GL_MATRIX_MODE);
 
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glPushMatrix();
+        GL11.glLoadIdentity();
+        GL11.glOrtho(0.0D, screen.width, screen.height, 0.0D, -1000.0D, 1000.0D);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glPushMatrix();
+        GL11.glLoadIdentity();
         GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glTranslatef(0.0F, 0.0F, 500.0F);
 
         Gui.drawRect(mouseX - 1, mouseY - 1, mouseX + 3, mouseY + 12, dark);
         Gui.drawRect(mouseX - 1, mouseY - 1, mouseX + 9, mouseY + 3, dark);
@@ -588,6 +601,9 @@ public final class GuiController {
         Gui.drawRect(mouseX, mouseY, mouseX + 7, mouseY + 1, light);
 
         GL11.glPopMatrix();
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glPopMatrix();
+        GL11.glMatrixMode(previousMatrixMode);
         GL11.glPopAttrib();
     }
 

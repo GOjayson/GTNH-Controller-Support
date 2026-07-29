@@ -1,5 +1,6 @@
 package dev.gtnhcontroller.mixins;
 
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,6 +16,12 @@ public interface GuiContainerCreativeControllerAccessor {
     @Accessor("currentScroll")
     void gtnhcontroller$setCurrentScroll(float currentScroll);
 
+    @Accessor("searchField")
+    GuiTextField gtnhcontroller$getSearchField();
+
     @Invoker("needsScrollBars")
     boolean gtnhcontroller$needsScrollBars();
+
+    @Invoker("updateCreativeSearch")
+    void gtnhcontroller$updateCreativeSearch();
 }

@@ -68,9 +68,15 @@ Test at least:
 - Creative inventory;
 - BetterQuesting quest book;
 - NEI;
+- JourneyMap fullscreen map;
+- Galacticraft celestial map;
 - one GTNH machine interface.
 
 Verify slot highlighting, item tooltips, left-click, right-click half stacks, dragging and closing the screen.
+
+For JourneyMap, hold GUI Confirm over the map, move the cursor and release. Verify that the map stays at the new
+position and Follow is disabled. For Galacticraft, verify that the cursor remains visible, planets can be selected,
+GUI Confirm can drag the map and both shoulder actions zoom it.
 
 ## Navigation and scrolling
 
@@ -101,15 +107,14 @@ Verify slot highlighting, item tooltips, left-click, right-click half stacks, dr
 
 ## On-screen keyboard
 
-The keyboard is experimental. Verify only that it:
+Focus a text field with GUI Confirm before opening the keyboard. Verify that it:
 
-- opens and closes;
-- navigates;
-- changes letter/symbol layouts;
-- sends Backspace;
-- does not crash or replace the underlying container.
-
-Printable character entry is a confirmed unresolved issue for version 1.0.0 and is not a release acceptance criterion.
+- opens and closes without replacing the underlying screen;
+- navigates and changes letter/symbol layouts;
+- enters lowercase letters, capitals, digits, spaces and symbols;
+- sends Backspace and Enter;
+- immediately updates Creative inventory and NEI search results;
+- enters text in chat, a server address and at least one item-naming screen.
 
 ## Release verification
 

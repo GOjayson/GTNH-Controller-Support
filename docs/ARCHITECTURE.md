@@ -45,11 +45,14 @@ compatibility paths for:
 - vanilla world and server lists;
 - creative inventory scrolling;
 - BetterQuesting canvas interaction;
+- JourneyMap fullscreen dragging;
+- Galacticraft celestial-map cursor rendering and zooming;
+- focused vanilla, Creative and NEI text fields;
 - exact registered keybinding dispatch;
 - vanilla Screenshot and Fullscreen actions.
 
 Unknown custom GUIs continue to receive the normal virtual cursor. Extra adapters are added only when a screen bypasses
-the vanilla input paths.
+the vanilla input paths. Optional-mod adapters use class names and reflection so those mods are not hard dependencies.
 
 ## Safety principles
 

@@ -2,6 +2,23 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.1.0
+
+### Fixed
+
+- Restored the virtual cursor on Galacticraft's celestial map even though that screen resets Minecraft's OpenGL
+  projection after drawing.
+- Added left-click dragging and shoulder-button zooming to the Galacticraft celestial map.
+- Added controller dragging to JourneyMap's fullscreen map, including the normal follow-mode release and tile refresh.
+- Added direct focused-field insertion fallbacks for the on-screen keyboard.
+- Preserved Creative inventory search refreshes and NEI's normal text-change callback when using the on-screen
+  keyboard.
+
+### Changed
+
+- Isolated optional Galacticraft and JourneyMap support behind reflection-based client adapters; neither mod is a
+  compile-time or runtime requirement.
+
 ## 1.0.0
 
 First public release.
