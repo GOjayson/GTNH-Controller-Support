@@ -1,6 +1,7 @@
 package dev.gtnhcontroller.client.input;
 
 import static dev.gtnhcontroller.client.input.ControllerAction.ATTACK;
+import static dev.gtnhcontroller.client.input.ControllerAction.DROP_ITEM;
 import static dev.gtnhcontroller.client.input.ControllerAction.HOTBAR_NEXT;
 import static dev.gtnhcontroller.client.input.ControllerAction.HOTBAR_PREVIOUS;
 import static dev.gtnhcontroller.client.input.ControllerAction.JUMP;
@@ -108,6 +109,9 @@ public final class GameplayController {
             minecraft.displayGuiScreen(new GuiInventory(minecraft.thePlayer));
             return;
         }
+        if (controllerProfile.wasPressed(DROP_ITEM)) {
+            KeyBinding.onTick(minecraft.gameSettings.keyBindDrop.getKeyCode());
+        }
 
         boolean jumpPressed = controllerProfile.wasPressed(JUMP);
         boolean jumpDown = controllerProfile.isDown(JUMP);
@@ -206,10 +210,11 @@ public final class GameplayController {
             gamepadManager.getAxis(RIGHT_Y),
             Config.lookDeadZone,
             Config.lookCurveExponent);
+        float yawDirection = Config.invertLookX ? -1.0F : 1.0F;
         float pitchDirection = Config.invertLookY ? -1.0F : 1.0F;
 
         float effectiveLookSpeed = Config.lookSpeed * Config.lookSensitivity;
-        minecraft.thePlayer.rotationYaw += look.x * effectiveLookSpeed * elapsedSeconds;
+        minecraft.thePlayer.rotationYaw += look.x * effectiveLookSpeed * yawDirection * elapsedSeconds;
         minecraft.thePlayer.rotationPitch = InputMath.clamp(
             minecraft.thePlayer.rotationPitch + look.y * effectiveLookSpeed * pitchDirection * elapsedSeconds,
             -90.0F,

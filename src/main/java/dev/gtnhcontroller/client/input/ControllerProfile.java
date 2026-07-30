@@ -15,7 +15,9 @@ import dev.gtnhcontroller.GTNHController;
 public final class ControllerProfile {
 
     private final SdlGamepadManager gamepadManager;
-    private final Map<ControllerAction, ControllerBinding> bindings = new EnumMap<ControllerAction, ControllerBinding>(
+    private final Map<ControllerAction, ControllerBinding> primaryBindings = new EnumMap<ControllerAction, ControllerBinding>(
+        ControllerAction.class);
+    private final Map<ControllerAction, ControllerBinding> modifierBindings = new EnumMap<ControllerAction, ControllerBinding>(
         ControllerAction.class);
     private final Map<ControllerAction, Boolean> currentStates = new EnumMap<ControllerAction, Boolean>(
         ControllerAction.class);
@@ -40,8 +42,20 @@ public final class ControllerProfile {
 
         for (ControllerAction action : ControllerAction.values()) {
             previousStates.put(action, currentStates.get(action));
-            boolean down = gamepadManager.isConnected() && bindings.get(action)
-                .isDown(gamepadManager, Config.triggerThreshold);
+        }
+
+        boolean connected = gamepadManager.isConnected();
+        boolean modifierDown = connected && primaryBindings.get(ControllerAction.MODIFIER_LAYER)
+            .isDown(gamepadManager, Config.triggerThreshold);
+        currentStates.put(ControllerAction.MODIFIER_LAYER, Boolean.valueOf(modifierDown));
+
+        for (ControllerAction action : ControllerAction.values()) {
+            if (action == ControllerAction.MODIFIER_LAYER) {
+                continue;
+            }
+            ControllerBindingLayer layer = ControllerBindingLayer.select(modifierDown, action);
+            ControllerBinding binding = bindingMap(layer).get(action);
+            boolean down = connected && binding != null && binding.isDown(gamepadManager, Config.triggerThreshold);
             currentStates.put(action, Boolean.valueOf(down));
         }
     }
@@ -57,17 +71,27 @@ public final class ControllerProfile {
     }
 
     public void setBinding(ControllerAction action, String bindingSpecification) {
+        setBinding(action, bindingSpecification, ControllerBindingLayer.PRIMARY);
+    }
+
+    public void setBinding(ControllerAction action, String bindingSpecification, ControllerBindingLayer layer) {
         ControllerBinding parsedBinding = ControllerBinding.parse(bindingSpecification);
-        Config.setBinding(action, bindingSpecification);
+        Config.setBinding(action, bindingSpecification, layer);
         Config.saveControllerSettings();
-        bindings.put(action, parsedBinding);
+        bindingMap(layer).put(action, parsedBinding);
         resetState(action);
     }
 
     public void resetBindings(boolean guiBindings) {
+        resetBindings(guiBindings, ControllerBindingLayer.PRIMARY);
+    }
+
+    public void resetBindings(boolean guiBindings, ControllerBindingLayer layer) {
         for (ControllerAction action : ControllerAction.values()) {
-            if (action.guiAction == guiBindings) {
-                Config.setBinding(action, action.defaultBinding);
+            if (action.guiAction == guiBindings
+                && !(layer == ControllerBindingLayer.MODIFIER && action == ControllerAction.MODIFIER_LAYER)) {
+                String defaultBinding = layer == ControllerBindingLayer.PRIMARY ? action.defaultBinding : "NONE";
+                Config.setBinding(action, defaultBinding, layer);
             }
         }
         Config.saveControllerSettings();
@@ -75,11 +99,22 @@ public final class ControllerProfile {
     }
 
     public void reloadBindings() {
-        bindings.clear();
+        primaryBindings.clear();
+        modifierBindings.clear();
         for (ControllerAction action : ControllerAction.values()) {
-            register(action, Config.getBinding(action));
+            register(action, ControllerBindingLayer.PRIMARY, Config.getBinding(action));
+            if (!action.guiAction && action != ControllerAction.MODIFIER_LAYER) {
+                register(
+                    action,
+                    ControllerBindingLayer.MODIFIER,
+                    Config.getBinding(action, ControllerBindingLayer.MODIFIER));
+            }
             resetState(action);
         }
+    }
+
+    public boolean isModifierActive() {
+        return isDown(ControllerAction.MODIFIER_LAYER);
     }
 
     private void resetState(ControllerAction action) {
@@ -87,17 +122,23 @@ public final class ControllerProfile {
         previousStates.put(action, Boolean.FALSE);
     }
 
-    private void register(ControllerAction action, String configuredBinding) {
+    private void register(ControllerAction action, ControllerBindingLayer layer, String configuredBinding) {
         try {
-            bindings.put(action, ControllerBinding.parse(configuredBinding));
+            bindingMap(layer).put(action, ControllerBinding.parse(configuredBinding));
         } catch (IllegalArgumentException exception) {
+            String fallback = layer == ControllerBindingLayer.PRIMARY ? action.defaultBinding : "NONE";
             GTNHController.LOG.error(
-                "Invalid controller binding '{}' for {}. Falling back to '{}'.",
+                "Invalid {} controller binding '{}' for {}. Falling back to '{}'.",
+                layer,
                 configuredBinding,
                 action,
-                action.defaultBinding,
+                fallback,
                 exception);
-            bindings.put(action, ControllerBinding.parse(action.defaultBinding));
+            bindingMap(layer).put(action, ControllerBinding.parse(fallback));
         }
+    }
+
+    private Map<ControllerAction, ControllerBinding> bindingMap(ControllerBindingLayer layer) {
+        return layer == ControllerBindingLayer.MODIFIER ? modifierBindings : primaryBindings;
     }
 }

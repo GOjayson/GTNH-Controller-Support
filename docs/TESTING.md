@@ -20,6 +20,8 @@ release; test the exact release JAR as well.
 3. Verify the controller name, both sticks, both triggers and pressed button names.
 4. Close F3 and verify that diagnostics disappear.
 5. Disconnect and reconnect the controller without restarting Minecraft.
+6. Connect a second controller, select each device in turn, and verify that only the selected device controls the game.
+7. Return selection to Automatic and verify that the first available device reconnects.
 
 ## Main menu and virtual cursor
 
@@ -36,6 +38,7 @@ release; test the exact release JAR as well.
 - Test partial-speed movement, full-speed movement and diagonals.
 - Test camera movement at low and high sensitivity.
 - Test Jump, Sneak, Sprint, Attack, Use, inventory and Pause.
+- Bind Drop Item and verify that each controller press drops one selected item.
 - Verify both hotbar directions.
 - On a fresh player, open the inventory and verify the vanilla achievement.
 - Hold an action while disconnecting the controller; the action must release.
@@ -90,6 +93,9 @@ GUI Confirm can drag the map and both shoulder actions zoom it.
 ## Bindings
 
 - Rebind a core gameplay action and a GUI action.
+- Bind Modifier Layer to an unused trigger or exposed paddle.
+- Add different core and mod actions on the Modifier page; verify primary actions stop while the modifier is held.
+- Clear Modifier Layer and verify all primary controls continue working.
 - Restart the game and verify persistence.
 - Assign a rear paddle if SDL exposes one independently.
 - Search for a GTNH mod action and bind it.
@@ -98,8 +104,10 @@ GUI Confirm can drag the map and both shoulder actions zoom it.
 
 ## Radial menu
 
-- Assign several registered actions.
+- Assign different registered actions to Base, Hold LB and Hold RB.
 - Hold the radial-menu input, select with the right stick and release.
+- While it is open, hold each shoulder and verify the page label and all eight assignments change.
+- Hold both shoulders and verify the Base page is selected.
 - Repeat with the D-pad.
 - Return the stick to center before release and verify cancellation.
 - Assign Screenshot and verify that exactly one screenshot is created.

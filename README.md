@@ -32,12 +32,15 @@ YouTube video.
 
 ## Features
 
-- True analog movement and camera control with configurable dead zones, response curves and sensitivity.
+- True analog movement and camera control with separate movement, camera, cursor and trigger deadzones.
+- Independent camera X/Y and GUI cursor X/Y inversion.
+- In-game controller selection when more than one SDL gamepad is connected.
 - Controller-driven cursor for menus, inventories, machine interfaces and BetterQuesting.
 - Controller panning and zooming for JourneyMap and Galacticraft's celestial map.
 - Rebindable gameplay and GUI actions, including SDL-exposed triggers, paddles and miscellaneous buttons.
+- Primary and hold-modifier binding layers for core, Minecraft and mod actions.
 - Searchable bindings for registered Minecraft and mod actions.
-- Eight-direction radial menu for frequently used mod actions.
+- Three eight-direction radial pages for up to 24 frequently used mod actions.
 - Directional GUI navigation, scrolling and a precision-cursor mode.
 - On-screen keyboard for focused vanilla, Creative inventory and NEI text fields.
 - Optional Auto Jump and Hold/Toggle swimming assistance.
@@ -90,11 +93,13 @@ SDL uses physical button positions, so the Xbox labels below map sensibly to oth
 | Left-stick click | Sprint |
 | Right trigger | Attack or mine |
 | Left trigger | Use item or place block |
+| Unbound | Drop selected item |
 | Left shoulder / D-pad left | Previous hotbar slot |
 | Right shoulder / D-pad right | Next hotbar slot |
 | North / Xbox Y | Open inventory |
 | Start | Pause menu |
 | Back / Xbox View | Hold radial menu |
+| Unbound | Hold modifier layer |
 
 ### Menus and inventories
 
@@ -109,8 +114,12 @@ SDL uses physical button positions, so the Xbox labels below map sensibly to oth
 | Left / right shoulder | Scroll up / down |
 | Right-stick click | Precision cursor while held |
 
-All core actions can be rebound. Additional Minecraft and mod actions can be assigned under
-`Controller... -> Minecraft & Mod Bindings...` or placed in the radial menu.
+All core actions can be rebound. Drop Item is listed under Gameplay Bindings. Configure Modifier Layer there, then
+use the `Layer: Primary/Modifier` button in either binding editor to assign a second set of actions. LT, RT and
+independently exposed rear paddles can all be used as the modifier.
+
+Additional Minecraft and mod actions can be assigned under `Controller... -> Minecraft & Mod Bindings...` or placed
+on any of the three radial pages. Hold LB or RB while the radial menu is open to access the two extra pages.
 
 ## Accessibility modes
 
@@ -125,8 +134,7 @@ menu opens, focus is lost, gameplay controls are disabled or the controller disc
 
 ## Known limitations
 
-- Only the first detected SDL gamepad is used.
-- Multiple saved controller profiles and merged adaptive-controller inputs are not implemented yet.
+- Multiple saved per-device binding profiles and merged adaptive-controller inputs are not implemented yet.
 - Custom text widgets and mod GUIs that bypass Minecraft's normal input APIs may still need dedicated compatibility
   code.
 

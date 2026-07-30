@@ -1,6 +1,7 @@
 package dev.gtnhcontroller;
 
 import java.io.File;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -8,13 +9,21 @@ import net.minecraftforge.common.config.Configuration;
 
 import dev.gtnhcontroller.client.input.ActivationMode;
 import dev.gtnhcontroller.client.input.ControllerAction;
+import dev.gtnhcontroller.client.input.ControllerBindingLayer;
+import dev.gtnhcontroller.client.input.ControllerSelection;
 import dev.gtnhcontroller.client.input.ModKeyBindingConfigCodec;
+import dev.gtnhcontroller.client.input.ModKeyBindingIdentifier;
 import dev.gtnhcontroller.client.input.RadialMenuConfigCodec;
+import dev.gtnhcontroller.client.input.RadialMenuPage;
 
 public final class Config {
 
+    private static final String VANILLA_DROP_IDENTIFIER = ModKeyBindingIdentifier
+        .create("key.categories.gameplay", "key.drop", 1);
+
     public static boolean showDebugOverlay = true;
     public static int rescanIntervalTicks = 40;
+    public static String controllerSelection = ControllerSelection.AUTOMATIC;
     public static boolean enableGameplayControls = true;
     public static boolean autoJump = false;
     @Deprecated
@@ -32,6 +41,7 @@ public final class Config {
     public static float lookCurveExponent = 1.6F;
     public static float lookSpeed = 120.0F;
     public static float triggerThreshold = 0.50F;
+    public static boolean invertLookX = false;
     public static boolean invertLookY = false;
     public static boolean enableGuiControls = true;
     public static float cursorSensitivity = 1.0F;
@@ -41,6 +51,8 @@ public final class Config {
     public static float cursorSpeed = 420.0F;
     public static float cursorAcceleration = 1400.0F;
     public static float cursorDeceleration = 2400.0F;
+    public static boolean invertCursorX = false;
+    public static boolean invertCursorY = false;
     public static boolean enableButtonNavigation = true;
     public static boolean enableSlotNavigation = true;
     public static float precisionCursorScale = 0.30F;
@@ -52,11 +64,13 @@ public final class Config {
     public static String sprintBinding = "BUTTON:LEFT_STICK";
     public static String attackBinding = "TRIGGER:RIGHT_TRIGGER";
     public static String useBinding = "TRIGGER:LEFT_TRIGGER";
+    public static String dropItemBinding = "NONE";
     public static String hotbarPreviousBinding = "BUTTON:LEFT_SHOULDER|BUTTON:DPAD_LEFT";
     public static String hotbarNextBinding = "BUTTON:RIGHT_SHOULDER|BUTTON:DPAD_RIGHT";
     public static String openInventoryBinding = "BUTTON:NORTH";
     public static String pauseBinding = "BUTTON:START";
     public static String radialMenuBinding = "BUTTON:BACK";
+    public static String modifierLayerBinding = "NONE";
     public static String guiConfirmBinding = "BUTTON:SOUTH";
     public static String guiAlternateBinding = "BUTTON:WEST";
     public static String guiBackBinding = "BUTTON:EAST";
@@ -70,8 +84,18 @@ public final class Config {
     public static String guiPrecisionBinding = "BUTTON:RIGHT_STICK";
 
     private static final Map<String, String> modKeyBindings = new LinkedHashMap<String, String>();
-    private static String[] radialMenuEntries = new String[RadialMenuConfigCodec.SLOT_COUNT];
+    private static final Map<String, String> modifierModKeyBindings = new LinkedHashMap<String, String>();
+    private static final Map<ControllerAction, String> modifierBindings = new EnumMap<ControllerAction, String>(
+        ControllerAction.class);
+    private static final Map<RadialMenuPage, String[]> radialMenuEntries = new EnumMap<RadialMenuPage, String[]>(
+        RadialMenuPage.class);
     private static File configFile;
+
+    static {
+        for (RadialMenuPage page : RadialMenuPage.values()) {
+            radialMenuEntries.put(page, new String[RadialMenuConfigCodec.SLOT_COUNT]);
+        }
+    }
 
     private Config() {}
 
@@ -91,6 +115,19 @@ public final class Config {
             20,
             1200,
             "How often to scan for a controller while none is connected. 20 ticks is approximately one second.");
+        controllerSelection = configuration.getString(
+            "selected",
+            "controller",
+            controllerSelection,
+            "Controller selected in-game. AUTO uses the first available SDL gamepad.");
+        if (ControllerSelection.isAutomatic(controllerSelection)) {
+            controllerSelection = ControllerSelection.AUTOMATIC;
+        } else if (!ControllerSelection.isValid(controllerSelection)) {
+            GTNHController.LOG.warn("Invalid controller selection '{}'; falling back to AUTO.", controllerSelection);
+            controllerSelection = ControllerSelection.AUTOMATIC;
+            configuration.get("controller", "selected", ControllerSelection.AUTOMATIC)
+                .set(ControllerSelection.AUTOMATIC);
+        }
         enableGameplayControls = configuration.getBoolean(
             "enableGameplayControls",
             "controls",
@@ -188,7 +225,9 @@ public final class Config {
             triggerThreshold,
             0.05F,
             0.95F,
-            "Trigger position at which attack or use becomes pressed.");
+            "Trigger dead zone: position at which a trigger binding becomes pressed.");
+        invertLookX = configuration
+            .getBoolean("invertLookX", "controls", invertLookX, "Invert the horizontal camera-stick direction.");
         invertLookY = configuration
             .getBoolean("invertLookY", "controls", invertLookY, "Invert the vertical right-stick camera direction.");
         enableGuiControls = configuration.getBoolean(
@@ -245,6 +284,10 @@ public final class Config {
             100.0F,
             10000.0F,
             "How quickly the GUI cursor stops or changes direction, in display pixels per second squared.");
+        invertCursorX = configuration
+            .getBoolean("invertCursorX", "gui", invertCursorX, "Invert the horizontal GUI cursor-stick direction.");
+        invertCursorY = configuration
+            .getBoolean("invertCursorY", "gui", invertCursorY, "Invert the vertical GUI cursor-stick direction.");
         enableButtonNavigation = configuration.getBoolean(
             "enableButtonNavigation",
             "guiNavigation",
@@ -282,6 +325,7 @@ public final class Config {
         sprintBinding = getBinding(configuration, "sprint", sprintBinding, "Sprint while playing.");
         attackBinding = getBinding(configuration, "attack", attackBinding, "Attack or mine.");
         useBinding = getBinding(configuration, "use", useBinding, "Use an item or place a block.");
+        dropItemBinding = getBinding(configuration, "dropItem", dropItemBinding, "Drop the selected item.");
         hotbarPreviousBinding = getBinding(
             configuration,
             "hotbarPrevious",
@@ -299,6 +343,11 @@ public final class Config {
             "radialMenu",
             radialMenuBinding,
             "Hold to open the radial action menu, aim with the right stick, and release to activate.");
+        modifierLayerBinding = getBinding(
+            configuration,
+            "modifierLayer",
+            modifierLayerBinding,
+            "Hold to use the alternate gameplay and Minecraft/mod binding layer.");
         guiConfirmBinding = getBinding(
             configuration,
             "guiConfirm",
@@ -358,12 +407,39 @@ public final class Config {
                     "modBindings",
                     new String[0],
                     "Dynamic controller bindings for registered Minecraft and mod key actions.")));
-        radialMenuEntries = RadialMenuConfigCodec.decode(
-            configuration.getStringList(
-                "entries",
-                "radialMenu",
-                new String[0],
-                "Registered Minecraft and mod key actions assigned to the eight radial-menu slots."));
+        modifierModKeyBindings.clear();
+        modifierModKeyBindings.putAll(
+            ModKeyBindingConfigCodec.decode(
+                configuration.getStringList(
+                    "entries",
+                    "modifierModBindings",
+                    new String[0],
+                    "Alternate-layer controller bindings for registered Minecraft and mod key actions.")));
+        modifierBindings.clear();
+        for (ControllerAction action : ControllerAction.values()) {
+            if (!action.guiAction && action != ControllerAction.MODIFIER_LAYER) {
+                modifierBindings.put(
+                    action,
+                    getBinding(
+                        configuration,
+                        "modifierBindings",
+                        action.configKey,
+                        "NONE",
+                        "Alternate-layer binding for " + action.displayName + "."));
+            }
+        }
+        migrateDropBinding(configuration);
+        radialMenuEntries.clear();
+        for (RadialMenuPage page : RadialMenuPage.values()) {
+            radialMenuEntries.put(
+                page,
+                RadialMenuConfigCodec.decode(
+                    configuration.getStringList(
+                        page.configKey,
+                        "radialMenu",
+                        new String[0],
+                        "Registered actions assigned to the eight " + page.displayName + " radial-menu slots.")));
+        }
 
         if (configuration.hasChanged()) {
             configuration.save();
@@ -382,6 +458,8 @@ public final class Config {
                 return attackBinding;
             case USE:
                 return useBinding;
+            case DROP_ITEM:
+                return dropItemBinding;
             case HOTBAR_PREVIOUS:
                 return hotbarPreviousBinding;
             case HOTBAR_NEXT:
@@ -392,6 +470,8 @@ public final class Config {
                 return pauseBinding;
             case RADIAL_MENU:
                 return radialMenuBinding;
+            case MODIFIER_LAYER:
+                return modifierLayerBinding;
             case GUI_CONFIRM:
                 return guiConfirmBinding;
             case GUI_ALTERNATE:
@@ -436,6 +516,9 @@ public final class Config {
             case USE:
                 useBinding = binding;
                 break;
+            case DROP_ITEM:
+                dropItemBinding = binding;
+                break;
             case HOTBAR_PREVIOUS:
                 hotbarPreviousBinding = binding;
                 break;
@@ -450,6 +533,9 @@ public final class Config {
                 break;
             case RADIAL_MENU:
                 radialMenuBinding = binding;
+                break;
+            case MODIFIER_LAYER:
+                modifierLayerBinding = binding;
                 break;
             case GUI_CONFIRM:
                 guiConfirmBinding = binding;
@@ -490,27 +576,65 @@ public final class Config {
     }
 
     public static String getModKeyBinding(String identifier) {
-        String binding = modKeyBindings.get(identifier);
+        return getModKeyBinding(identifier, ControllerBindingLayer.PRIMARY);
+    }
+
+    public static String getModKeyBinding(String identifier, ControllerBindingLayer layer) {
+        Map<String, String> bindings = layer == ControllerBindingLayer.MODIFIER ? modifierModKeyBindings
+            : modKeyBindings;
+        String binding = bindings.get(identifier);
         return binding == null ? "NONE" : binding;
     }
 
     public static void setModKeyBinding(String identifier, String binding) {
+        setModKeyBinding(identifier, binding, ControllerBindingLayer.PRIMARY);
+    }
+
+    public static void setModKeyBinding(String identifier, String binding, ControllerBindingLayer layer) {
+        Map<String, String> bindings = layer == ControllerBindingLayer.MODIFIER ? modifierModKeyBindings
+            : modKeyBindings;
         if (binding == null || "NONE".equalsIgnoreCase(binding)) {
-            modKeyBindings.remove(identifier);
+            bindings.remove(identifier);
         } else {
-            modKeyBindings.put(identifier, binding);
+            bindings.put(identifier, binding);
         }
     }
 
     public static String getRadialMenuEntry(int slot) {
+        return getRadialMenuEntry(RadialMenuPage.BASE, slot);
+    }
+
+    public static String getRadialMenuEntry(RadialMenuPage page, int slot) {
+        requireRadialMenuPage(page);
         requireRadialMenuSlot(slot);
-        String identifier = radialMenuEntries[slot];
+        String identifier = radialMenuEntries.get(page)[slot];
         return identifier == null ? "" : identifier;
     }
 
     public static void setRadialMenuEntry(int slot, String identifier) {
+        setRadialMenuEntry(RadialMenuPage.BASE, slot, identifier);
+    }
+
+    public static void setRadialMenuEntry(RadialMenuPage page, int slot, String identifier) {
+        requireRadialMenuPage(page);
         requireRadialMenuSlot(slot);
-        radialMenuEntries[slot] = identifier == null ? "" : identifier;
+        radialMenuEntries.get(page)[slot] = identifier == null ? "" : identifier;
+    }
+
+    public static String getBinding(ControllerAction action, ControllerBindingLayer layer) {
+        if (layer == ControllerBindingLayer.PRIMARY || action.guiAction || action == ControllerAction.MODIFIER_LAYER) {
+            return getBinding(action);
+        }
+        String binding = modifierBindings.get(action);
+        return binding == null ? "NONE" : binding;
+    }
+
+    public static void setBinding(ControllerAction action, String binding, ControllerBindingLayer layer) {
+        if (layer == ControllerBindingLayer.PRIMARY || action.guiAction || action == ControllerAction.MODIFIER_LAYER) {
+            setBinding(action, binding);
+        } else {
+            modifierBindings.put(action, binding);
+        }
     }
 
     public static void resetActivationModes() {
@@ -550,10 +674,28 @@ public final class Config {
             .set(moveSensitivity);
         configuration.get("controls", "lookSensitivity", lookSensitivity)
             .set(lookSensitivity);
+        configuration.get("controls", "moveDeadZone", moveDeadZone)
+            .set(moveDeadZone);
+        configuration.get("controls", "lookDeadZone", lookDeadZone)
+            .set(lookDeadZone);
+        configuration.get("controls", "triggerThreshold", triggerThreshold)
+            .set(triggerThreshold);
+        configuration.get("controls", "invertLookX", invertLookX)
+            .set(invertLookX);
+        configuration.get("controls", "invertLookY", invertLookY)
+            .set(invertLookY);
+        configuration.get("controller", "selected", controllerSelection)
+            .set(controllerSelection);
         configuration.get("gui", "enableGuiControls", enableGuiControls)
             .set(enableGuiControls);
         configuration.get("gui", "cursorSensitivity", cursorSensitivity)
             .set(cursorSensitivity);
+        configuration.get("gui", "cursorDeadZone", cursorDeadZone)
+            .set(cursorDeadZone);
+        configuration.get("gui", "invertCursorX", invertCursorX)
+            .set(invertCursorX);
+        configuration.get("gui", "invertCursorY", invertCursorY)
+            .set(invertCursorY);
         configuration.get("guiNavigation", "enableButtonNavigation", enableButtonNavigation)
             .set(enableButtonNavigation);
         configuration.get("guiNavigation", "enableSlotNavigation", enableSlotNavigation)
@@ -568,11 +710,20 @@ public final class Config {
             String binding = getBinding(action);
             configuration.get("bindings", action.configKey, binding)
                 .set(binding);
+            if (!action.guiAction && action != ControllerAction.MODIFIER_LAYER) {
+                String modifierBinding = getBinding(action, ControllerBindingLayer.MODIFIER);
+                configuration.get("modifierBindings", action.configKey, modifierBinding)
+                    .set(modifierBinding);
+            }
         }
         configuration.get("modBindings", "entries", new String[0])
             .set(ModKeyBindingConfigCodec.encode(modKeyBindings));
-        configuration.get("radialMenu", "entries", new String[0])
-            .set(RadialMenuConfigCodec.encode(radialMenuEntries));
+        configuration.get("modifierModBindings", "entries", new String[0])
+            .set(ModKeyBindingConfigCodec.encode(modifierModKeyBindings));
+        for (RadialMenuPage page : RadialMenuPage.values()) {
+            configuration.get("radialMenu", page.configKey, new String[0])
+                .set(RadialMenuConfigCodec.encode(radialMenuEntries.get(page)));
+        }
 
         if (configuration.hasChanged()) {
             configuration.save();
@@ -581,9 +732,14 @@ public final class Config {
 
     private static String getBinding(Configuration configuration, String name, String defaultValue,
         String actionDescription) {
+        return getBinding(configuration, "bindings", name, defaultValue, actionDescription);
+    }
+
+    private static String getBinding(Configuration configuration, String category, String name, String defaultValue,
+        String actionDescription) {
         return configuration.getString(
             name,
-            "bindings",
+            category,
             defaultValue,
             actionDescription + " Use BUTTON:<name>, TRIGGER:<name>, alternatives separated by |, or NONE.");
     }
@@ -606,6 +762,27 @@ public final class Config {
         return parsedValue;
     }
 
+    private static void migrateDropBinding(Configuration configuration) {
+        String previousPrimary = modKeyBindings.remove(VANILLA_DROP_IDENTIFIER);
+        if ("NONE".equalsIgnoreCase(dropItemBinding) && previousPrimary != null) {
+            dropItemBinding = previousPrimary;
+            configuration.get("bindings", ControllerAction.DROP_ITEM.configKey, dropItemBinding)
+                .set(dropItemBinding);
+        }
+        configuration.get("modBindings", "entries", new String[0])
+            .set(ModKeyBindingConfigCodec.encode(modKeyBindings));
+
+        String previousModifier = modifierModKeyBindings.remove(VANILLA_DROP_IDENTIFIER);
+        String modifierDrop = modifierBindings.get(ControllerAction.DROP_ITEM);
+        if ((modifierDrop == null || "NONE".equalsIgnoreCase(modifierDrop)) && previousModifier != null) {
+            modifierBindings.put(ControllerAction.DROP_ITEM, previousModifier);
+            configuration.get("modifierBindings", ControllerAction.DROP_ITEM.configKey, previousModifier)
+                .set(previousModifier);
+        }
+        configuration.get("modifierModBindings", "entries", new String[0])
+            .set(ModKeyBindingConfigCodec.encode(modifierModKeyBindings));
+    }
+
     private static float migrateLegacyGuiValue(Configuration configuration, String name, float configuredValue,
         float legacyDefault, float replacementDefault) {
         if (Math.abs(configuredValue - legacyDefault) > 0.0001F) {
@@ -620,6 +797,12 @@ public final class Config {
     private static void requireRadialMenuSlot(int slot) {
         if (slot < 0 || slot >= RadialMenuConfigCodec.SLOT_COUNT) {
             throw new IllegalArgumentException("Radial-menu slot is out of range: " + slot);
+        }
+    }
+
+    private static void requireRadialMenuPage(RadialMenuPage page) {
+        if (page == null || !radialMenuEntries.containsKey(page)) {
+            throw new IllegalArgumentException("Radial-menu page is unavailable: " + page);
         }
     }
 }

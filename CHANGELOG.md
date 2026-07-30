@@ -2,6 +2,23 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.2.0
+
+### Added
+
+- Added Drop Item to the core Gameplay Bindings screen.
+- Added an optional hold-modifier layer for core gameplay actions and registered Minecraft/mod keybindings.
+- Added in-game selection between connected SDL gamepads, including duplicate-name numbering.
+- Added separate in-game movement, camera, GUI cursor and trigger deadzone controls.
+- Added independent camera X/Y and GUI cursor X/Y inversion.
+- Added Left Shoulder and Right Shoulder radial pages, increasing capacity from eight to 24 actions.
+
+### Changed
+
+- Removed Drop Item from the dynamic Minecraft/mod list because the core gameplay page now owns it.
+- Kept automatic controller selection and existing hot-plug behavior as the default.
+- Preserved all existing 1.1.x bindings and migrated the original radial slots to the Base page.
+
 ## 1.1.1
 
 ### Fixed

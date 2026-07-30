@@ -33,6 +33,7 @@ import dev.gtnhcontroller.mixins.KeyBindingControllerAccessor;
 public final class ModKeyBindingController {
 
     private final SdlGamepadManager gamepadManager;
+    private final ControllerProfile controllerProfile;
     private final List<RegisteredKeyBinding> registeredBindings = new ArrayList<RegisteredKeyBinding>();
     private final Map<String, BindingState> states = new LinkedHashMap<String, BindingState>();
     private final Set<KeyBinding> pendingPulseReleases = Collections
@@ -40,8 +41,9 @@ public final class ModKeyBindingController {
 
     private KeyBinding[] observedKeyBindings = new KeyBinding[0];
 
-    public ModKeyBindingController(SdlGamepadManager gamepadManager) {
+    public ModKeyBindingController(SdlGamepadManager gamepadManager, ControllerProfile controllerProfile) {
         this.gamepadManager = gamepadManager;
+        this.controllerProfile = controllerProfile;
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
@@ -63,8 +65,9 @@ public final class ModKeyBindingController {
         }
 
         for (BindingState state : states.values()) {
-            boolean controllerDown = !state.controllerBinding.isEmpty()
-                && state.controllerBinding.isDown(gamepadManager, Config.triggerThreshold);
+            ControllerBinding controllerBinding = state.getBinding(controllerProfile.isModifierActive());
+            boolean controllerDown = !controllerBinding.isEmpty()
+                && controllerBinding.isDown(gamepadManager, Config.triggerThreshold);
             controllerStateChanged |= state.controllerDown != controllerDown;
             if (controllerDown && !state.controllerDown) {
                 dispatchEventDrivenVanillaBinding(minecraft, state.entry);
@@ -129,8 +132,12 @@ public final class ModKeyBindingController {
     }
 
     public void setBinding(String identifier, String bindingSpecification) {
+        setBinding(identifier, bindingSpecification, ControllerBindingLayer.PRIMARY);
+    }
+
+    public void setBinding(String identifier, String bindingSpecification, ControllerBindingLayer layer) {
         ControllerBinding parsedBinding = ControllerBinding.parse(bindingSpecification);
-        Config.setModKeyBinding(identifier, bindingSpecification);
+        Config.setModKeyBinding(identifier, bindingSpecification, layer);
         Config.saveControllerSettings();
 
         BindingState state = states.get(identifier);
@@ -138,26 +145,33 @@ public final class ModKeyBindingController {
             if (state.controllerDown) {
                 updateExactBinding(state.entry.getKeyBinding(), true, false);
             }
-            state.controllerBinding = parsedBinding;
+            state.setBinding(layer, parsedBinding);
             state.controllerDown = false;
         }
     }
 
     public boolean hasConflict(String identifier) {
+        return hasConflict(identifier, ControllerBindingLayer.PRIMARY);
+    }
+
+    public boolean hasConflict(String identifier, ControllerBindingLayer layer) {
         BindingState subject = states.get(identifier);
-        if (subject == null || subject.controllerBinding.isEmpty()) {
+        if (subject == null || subject.getBinding(layer)
+            .isEmpty()) {
             return false;
         }
 
         for (Map.Entry<String, BindingState> candidate : states.entrySet()) {
-            if (!identifier.equals(candidate.getKey())
-                && subject.controllerBinding.conflictsWith(candidate.getValue().controllerBinding)) {
+            if (!identifier.equals(candidate.getKey()) && subject.getBinding(layer)
+                .conflictsWith(
+                    candidate.getValue()
+                        .getBinding(layer))) {
                 return true;
             }
         }
         for (ControllerAction action : ControllerAction.values()) {
-            if (!action.guiAction
-                && subject.controllerBinding.conflictsWith(safeParse(Config.getBinding(action), action.displayName))) {
+            if (!action.guiAction && subject.getBinding(layer)
+                .conflictsWith(safeParse(Config.getBinding(action, layer), action.displayName))) {
                 return true;
             }
         }
@@ -212,11 +226,14 @@ public final class ModKeyBindingController {
                 localize(categoryKey),
                 localize(descriptionKey),
                 occurrence);
-            ControllerBinding controllerBinding = safeParse(
-                Config.getModKeyBinding(identifier),
+            ControllerBinding primaryBinding = safeParse(
+                Config.getModKeyBinding(identifier, ControllerBindingLayer.PRIMARY),
                 entry.getDisplayName());
+            ControllerBinding modifierBinding = safeParse(
+                Config.getModKeyBinding(identifier, ControllerBindingLayer.MODIFIER),
+                entry.getDisplayName() + " (Modifier)");
             registeredBindings.add(entry);
-            states.put(identifier, new BindingState(entry, controllerBinding));
+            states.put(identifier, new BindingState(entry, primaryBinding, modifierBinding));
         }
     }
 
@@ -283,6 +300,7 @@ public final class ModKeyBindingController {
         excluded.add(settings.keyBindAttack);
         excluded.add(settings.keyBindUseItem);
         excluded.add(settings.keyBindInventory);
+        excluded.add(settings.keyBindDrop);
         return excluded;
     }
 
@@ -325,12 +343,31 @@ public final class ModKeyBindingController {
     private static final class BindingState {
 
         private final RegisteredKeyBinding entry;
-        private ControllerBinding controllerBinding;
+        private ControllerBinding primaryBinding;
+        private ControllerBinding modifierBinding;
         private boolean controllerDown;
 
-        private BindingState(RegisteredKeyBinding entry, ControllerBinding controllerBinding) {
+        private BindingState(RegisteredKeyBinding entry, ControllerBinding primaryBinding,
+            ControllerBinding modifierBinding) {
             this.entry = entry;
-            this.controllerBinding = controllerBinding;
+            this.primaryBinding = primaryBinding;
+            this.modifierBinding = modifierBinding;
+        }
+
+        private ControllerBinding getBinding(boolean modifierActive) {
+            return modifierActive ? modifierBinding : primaryBinding;
+        }
+
+        private ControllerBinding getBinding(ControllerBindingLayer layer) {
+            return layer == ControllerBindingLayer.MODIFIER ? modifierBinding : primaryBinding;
+        }
+
+        private void setBinding(ControllerBindingLayer layer, ControllerBinding binding) {
+            if (layer == ControllerBindingLayer.MODIFIER) {
+                modifierBinding = binding;
+            } else {
+                primaryBinding = binding;
+            }
         }
     }
 }

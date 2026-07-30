@@ -10,6 +10,7 @@ import org.lwjgl.input.Keyboard;
 
 import dev.gtnhcontroller.Config;
 import dev.gtnhcontroller.client.input.ControllerAction;
+import dev.gtnhcontroller.client.input.ControllerBindingLayer;
 import dev.gtnhcontroller.client.input.ControllerProfile;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
 
@@ -22,16 +23,19 @@ public final class GuiControllerBindingScreen extends GuiScreen
     private static final int NEXT_PAGE = 3001;
     private static final int RESET_DEFAULTS = 3002;
     private static final int DONE = 3003;
+    private static final int TOGGLE_LAYER = 3004;
     private static final int ROWS_PER_PAGE = 6;
     private static final float CAPTURE_TRIGGER_THRESHOLD = 0.50F;
 
     private final GuiScreen parentScreen;
     private final SdlGamepadManager gamepadManager;
     private final ControllerProfile controllerProfile;
-    private final ControllerAction[] actions;
+    private ControllerAction[] actions;
     private final String title;
+    private final boolean guiBindings;
 
     private int page;
+    private ControllerBindingLayer bindingLayer = ControllerBindingLayer.PRIMARY;
     private ControllerAction captureAction;
     private boolean captureArmed;
     private boolean waitingForCapturedInputRelease;
@@ -41,6 +45,7 @@ public final class GuiControllerBindingScreen extends GuiScreen
         this.parentScreen = parentScreen;
         this.gamepadManager = gamepadManager;
         this.controllerProfile = controllerProfile;
+        this.guiBindings = guiBindings;
         actions = getActions(guiBindings);
         title = guiBindings ? "GUI Controller Bindings" : "Gameplay Controller Bindings";
     }
@@ -55,7 +60,7 @@ public final class GuiControllerBindingScreen extends GuiScreen
             int buttonY = 48 + row * 22;
             ControllerAction action = actions[actionIndex];
             String bindingLabel = action == captureAction ? (captureArmed ? "> Press input <" : "Release inputs...")
-                : ControllerBindingDisplay.format(Config.getBinding(action));
+                : ControllerBindingDisplay.format(Config.getBinding(action, bindingLayer));
 
             GuiButton bindingButton = new GuiButton(
                 BINDING_BUTTON_BASE + actionIndex,
@@ -86,6 +91,17 @@ public final class GuiControllerBindingScreen extends GuiScreen
             nextButton.enabled = page < pageCount - 1 && captureAction == null && !waitingForCapturedInputRelease;
             buttonList.add(previousButton);
             buttonList.add(nextButton);
+        }
+        if (!guiBindings) {
+            GuiButton layerButton = new GuiButton(
+                TOGGLE_LAYER,
+                width / 2 - 75,
+                height - 52,
+                150,
+                20,
+                "Layer: " + bindingLayer.displayName);
+            layerButton.enabled = captureAction == null && !waitingForCapturedInputRelease;
+            buttonList.add(layerButton);
         }
 
         GuiButton resetButton = new GuiButton(RESET_DEFAULTS, width / 2 - 155, height - 28, 150, 20, "Reset Defaults");
@@ -130,7 +146,7 @@ public final class GuiControllerBindingScreen extends GuiScreen
             beginCapture(actions[button.id - BINDING_BUTTON_BASE]);
         } else if (button.id >= CLEAR_BUTTON_BASE && button.id < CLEAR_BUTTON_BASE + actions.length) {
             ControllerAction action = actions[button.id - CLEAR_BUTTON_BASE];
-            controllerProfile.setBinding(action, "NONE");
+            controllerProfile.setBinding(action, "NONE", bindingLayer);
             waitForInputRelease();
         } else if (button.id == PREVIOUS_PAGE && page > 0) {
             page--;
@@ -138,8 +154,14 @@ public final class GuiControllerBindingScreen extends GuiScreen
         } else if (button.id == NEXT_PAGE && page < getPageCount() - 1) {
             page++;
             initGui();
+        } else if (button.id == TOGGLE_LAYER && !guiBindings) {
+            bindingLayer = bindingLayer == ControllerBindingLayer.PRIMARY ? ControllerBindingLayer.MODIFIER
+                : ControllerBindingLayer.PRIMARY;
+            page = 0;
+            actions = getActions(false, bindingLayer);
+            initGui();
         } else if (button.id == RESET_DEFAULTS) {
-            controllerProfile.resetBindings(actions[0].guiAction);
+            controllerProfile.resetBindings(guiBindings, bindingLayer);
             waitForInputRelease();
         } else if (button.id == DONE) {
             mc.displayGuiScreen(parentScreen);
@@ -183,12 +205,7 @@ public final class GuiControllerBindingScreen extends GuiScreen
         }
 
         if (getPageCount() > 1) {
-            drawCenteredString(
-                fontRendererObj,
-                "Page " + (page + 1) + " / " + getPageCount(),
-                width / 2,
-                height - 46,
-                0xA0A0A0);
+            drawCenteredString(fontRendererObj, "Page " + (page + 1) + " / " + getPageCount(), width / 2, 38, 0xA0A0A0);
         }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
@@ -205,7 +222,7 @@ public final class GuiControllerBindingScreen extends GuiScreen
     }
 
     private void applyBinding(String bindingSpecification) {
-        controllerProfile.setBinding(captureAction, bindingSpecification);
+        controllerProfile.setBinding(captureAction, bindingSpecification, bindingLayer);
         waitForInputRelease();
     }
 
@@ -232,9 +249,14 @@ public final class GuiControllerBindingScreen extends GuiScreen
     }
 
     private static ControllerAction[] getActions(boolean guiBindings) {
+        return getActions(guiBindings, ControllerBindingLayer.PRIMARY);
+    }
+
+    private static ControllerAction[] getActions(boolean guiBindings, ControllerBindingLayer layer) {
         List<ControllerAction> selectedActions = new ArrayList<ControllerAction>();
         for (ControllerAction action : ControllerAction.values()) {
-            if (action.guiAction == guiBindings) {
+            if (action.guiAction == guiBindings
+                && !(layer == ControllerBindingLayer.MODIFIER && action == ControllerAction.MODIFIER_LAYER)) {
                 selectedActions.add(action);
             }
         }

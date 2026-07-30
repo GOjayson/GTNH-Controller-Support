@@ -217,6 +217,8 @@ public final class GuiController {
             gamepadManager.getAxis(useLeftStick ? LEFT_Y : RIGHT_Y),
             Config.cursorDeadZone,
             Config.cursorCurveExponent);
+        float cursorInputX = Config.invertCursorX ? -cursorInput.x : cursorInput.x;
+        float cursorInputY = Config.invertCursorY ? -cursorInput.y : cursorInput.y;
         boolean stickActive = cursorInput != StickVector.ZERO;
         boolean controllerCursorMoving = stickActive || !CursorMotion.isStopped(cursorVelocityX, cursorVelocityY);
 
@@ -261,13 +263,13 @@ public final class GuiController {
             .decelerationRate(Config.cursorDeceleration, Config.cursorSensitivity, fullCursorSpeed);
         cursorVelocityX = CursorMotion.updateVelocity(
             cursorVelocityX,
-            cursorInput.x * effectiveCursorSpeed * horizontalScale,
+            cursorInputX * effectiveCursorSpeed * horizontalScale,
             effectiveAcceleration * horizontalScale,
             effectiveDeceleration * horizontalScale,
             elapsedSeconds);
         cursorVelocityY = CursorMotion.updateVelocity(
             cursorVelocityY,
-            cursorInput.y * effectiveCursorSpeed * verticalScale,
+            cursorInputY * effectiveCursorSpeed * verticalScale,
             effectiveAcceleration * verticalScale,
             effectiveDeceleration * verticalScale,
             elapsedSeconds);

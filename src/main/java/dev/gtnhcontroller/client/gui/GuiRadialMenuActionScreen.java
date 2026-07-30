@@ -16,6 +16,7 @@ import org.lwjgl.input.Keyboard;
 
 import dev.gtnhcontroller.Config;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
+import dev.gtnhcontroller.client.input.RadialMenuPage;
 import dev.gtnhcontroller.client.input.RegisteredKeyBinding;
 
 public final class GuiRadialMenuActionScreen extends GuiScreen implements ControllerConfigurationScreen {
@@ -31,6 +32,7 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
 
     private final GuiScreen parentScreen;
     private final ModKeyBindingController keyBindingController;
+    private final RadialMenuPage radialPage;
     private final int targetSlot;
     private final List<RegisteredKeyBinding> allBindings = new ArrayList<RegisteredKeyBinding>();
     private final List<RegisteredKeyBinding> filteredBindings = new ArrayList<RegisteredKeyBinding>();
@@ -41,9 +43,10 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
     private int page;
 
     public GuiRadialMenuActionScreen(GuiScreen parentScreen, ModKeyBindingController keyBindingController,
-        int targetSlot) {
+        RadialMenuPage radialPage, int targetSlot) {
         this.parentScreen = parentScreen;
         this.keyBindingController = keyBindingController;
+        this.radialPage = radialPage;
         this.targetSlot = targetSlot;
     }
 
@@ -83,7 +86,7 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
         int rowCount = visibleRowCount();
         if (button.id >= SELECT_BUTTON_BASE && button.id < SELECT_BUTTON_BASE + rowCount) {
             RegisteredKeyBinding binding = visibleBinding(button.id - SELECT_BUTTON_BASE);
-            Config.setRadialMenuEntry(targetSlot, binding.getIdentifier());
+            Config.setRadialMenuEntry(radialPage, targetSlot, binding.getIdentifier());
             Config.saveControllerSettings();
             mc.displayGuiScreen(parentScreen);
         } else if (button.id == CATEGORY) {
@@ -97,7 +100,7 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
             page++;
             rebuildButtons();
         } else if (button.id == CLEAR_SLOT) {
-            Config.setRadialMenuEntry(targetSlot, "");
+            Config.setRadialMenuEntry(radialPage, targetSlot, "");
             Config.saveControllerSettings();
             mc.displayGuiScreen(parentScreen);
         } else if (button.id == CANCEL) {
@@ -250,7 +253,7 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
         }
 
         GuiButton clearButton = new GuiButton(CLEAR_SLOT, width / 2 - 155, height - 28, 150, 20, "Clear Slot");
-        clearButton.enabled = !Config.getRadialMenuEntry(targetSlot)
+        clearButton.enabled = !Config.getRadialMenuEntry(radialPage, targetSlot)
             .isEmpty();
         buttonList.add(clearButton);
         buttonList.add(new GuiButton(CANCEL, width / 2 + 5, height - 28, 150, 20, "Cancel"));

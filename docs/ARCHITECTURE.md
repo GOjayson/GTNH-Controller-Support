@@ -20,6 +20,14 @@ Gameplay and GUI control are intentionally separate:
 
 Separating contexts prevents a button such as Xbox B from triggering Sneak and GUI Back simultaneously.
 
+`ControllerProfile` snapshots the modifier input before resolving other actions. Gameplay and registered keybindings
+then read either the Primary or Modifier map for that tick. GUI actions intentionally remain on the Primary map so a
+gameplay modifier cannot silently replace menu Confirm or Back.
+
+Controller selection stores the SDL gamepad name plus its occurrence among identical names. `AUTO` retains the
+original first-available behavior. Instance IDs are used only during the running session because SDL can assign new
+ones after reconnection.
+
 ## Analog movement
 
 Forge 1.7.10 predates the later `InputUpdateEvent`. A focused Mixin runs after vanilla calculates keyboard movement,

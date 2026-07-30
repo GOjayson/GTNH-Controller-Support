@@ -8,6 +8,8 @@ import static dev.gtnhcontroller.client.input.ControllerButton.DPAD_DOWN;
 import static dev.gtnhcontroller.client.input.ControllerButton.DPAD_LEFT;
 import static dev.gtnhcontroller.client.input.ControllerButton.DPAD_RIGHT;
 import static dev.gtnhcontroller.client.input.ControllerButton.DPAD_UP;
+import static dev.gtnhcontroller.client.input.ControllerButton.LEFT_SHOULDER;
+import static dev.gtnhcontroller.client.input.ControllerButton.RIGHT_SHOULDER;
 
 import net.minecraft.client.gui.GuiScreen;
 
@@ -18,6 +20,7 @@ import dev.gtnhcontroller.Config;
 import dev.gtnhcontroller.client.input.ControllerProfile;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.RadialMenuConfigCodec;
+import dev.gtnhcontroller.client.input.RadialMenuPage;
 import dev.gtnhcontroller.client.input.RegisteredKeyBinding;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
 
@@ -38,6 +41,7 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
 
     private int selectedSlot = -1;
     private int latchedDPadSlot = -1;
+    private RadialMenuPage radialPage = RadialMenuPage.BASE;
     private boolean finished;
 
     public GuiRadialMenuScreen(SdlGamepadManager gamepadManager, ControllerProfile controllerProfile,
@@ -50,14 +54,19 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
     @Override
     public void initGui() {
         keyBindingController.refreshBindings();
-        for (int slot = 0; slot < entries.length; slot++) {
-            entries[slot] = keyBindingController.findRegisteredBinding(Config.getRadialMenuEntry(slot));
-        }
+        radialPage = selectedPage();
+        loadEntries();
     }
 
     @Override
     public void updateScreen() {
         super.updateScreen();
+        RadialMenuPage requestedPage = selectedPage();
+        if (requestedPage != radialPage) {
+            radialPage = requestedPage;
+            latchedDPadSlot = -1;
+            loadEntries();
+        }
         int stickSelection = RadialMenuSelection
             .select(gamepadManager.getAxis(RIGHT_X), gamepadManager.getAxis(RIGHT_Y), SELECTION_THRESHOLD);
         int dPadSelection = RadialMenuSelection.selectDPad(
@@ -99,9 +108,10 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
         String centerLabel = selectedSlot < 0 ? "Aim with stick or D-pad"
             : entries[selectedSlot] == null ? "Slot is empty" : "Release to activate";
         drawCenteredString(fontRendererObj, centerLabel, centerX, centerY - 4, 0xFFFFFF);
+        drawCenteredString(fontRendererObj, "Page: " + radialPage.displayName, centerX, 16, 0xFFFFFF);
         drawCenteredString(
             fontRendererObj,
-            "D-pad selection stays selected; B cancels",
+            "Hold LB/RB for extra pages; D-pad latches; B cancels",
             centerX,
             height - 18,
             0xA0A0A0);
@@ -161,7 +171,8 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
         }
         finished = true;
 
-        String identifier = activateSelection && selectedSlot >= 0 ? Config.getRadialMenuEntry(selectedSlot) : "";
+        String identifier = activateSelection && selectedSlot >= 0 ? Config.getRadialMenuEntry(radialPage, selectedSlot)
+            : "";
         mc.displayGuiScreen(null);
         if (mc.thePlayer != null) {
             mc.setIngameFocus();
@@ -169,6 +180,17 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
         if (!identifier.isEmpty()) {
             keyBindingController.pulseBinding(identifier);
         }
+    }
+
+    private void loadEntries() {
+        for (int slot = 0; slot < entries.length; slot++) {
+            entries[slot] = keyBindingController.findRegisteredBinding(Config.getRadialMenuEntry(radialPage, slot));
+        }
+    }
+
+    private RadialMenuPage selectedPage() {
+        return RadialMenuPage
+            .select(gamepadManager.isButtonDown(LEFT_SHOULDER), gamepadManager.isButtonDown(RIGHT_SHOULDER));
     }
 
     private static void setColor(int color) {

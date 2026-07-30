@@ -28,7 +28,7 @@ public final class ClientProxy extends CommonProxy {
 
         gamepadManager = new SdlGamepadManager(Config.rescanIntervalTicks);
         controllerProfile = new ControllerProfile(gamepadManager);
-        modKeyBindingController = new ModKeyBindingController(gamepadManager);
+        modKeyBindingController = new ModKeyBindingController(gamepadManager, controllerProfile);
         radialMenuController = new RadialMenuController(gamepadManager, controllerProfile, modKeyBindingController);
         gameplayController = new GameplayController(gamepadManager, controllerProfile);
         guiController = new GuiController(gamepadManager, controllerProfile);

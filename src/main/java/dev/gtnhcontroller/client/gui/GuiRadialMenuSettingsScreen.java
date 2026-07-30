@@ -6,9 +6,12 @@ import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 
 import dev.gtnhcontroller.Config;
+import dev.gtnhcontroller.client.input.ControllerButton;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.RadialMenuConfigCodec;
+import dev.gtnhcontroller.client.input.RadialMenuPage;
 import dev.gtnhcontroller.client.input.RegisteredKeyBinding;
+import dev.gtnhcontroller.client.input.SdlGamepadManager;
 
 public final class GuiRadialMenuSettingsScreen extends GuiScreen implements ControllerConfigurationScreen {
 
@@ -17,17 +20,22 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
     private static final int PREVIOUS_PAGE = 300;
     private static final int NEXT_PAGE = 301;
     private static final int DONE = 302;
+    private static final int RADIAL_PAGE_BASE = 400;
     private static final int SLOTS_PER_PAGE = 4;
     private static final String[] SLOT_NAMES = { "Up", "Up-right", "Right", "Down-right", "Down", "Down-left", "Left",
         "Up-left" };
 
     private final GuiScreen parentScreen;
+    private final SdlGamepadManager gamepadManager;
     private final ModKeyBindingController keyBindingController;
 
     private int page;
+    private RadialMenuPage radialPage = RadialMenuPage.BASE;
 
-    public GuiRadialMenuSettingsScreen(GuiScreen parentScreen, ModKeyBindingController keyBindingController) {
+    public GuiRadialMenuSettingsScreen(GuiScreen parentScreen, SdlGamepadManager gamepadManager,
+        ModKeyBindingController keyBindingController) {
         this.parentScreen = parentScreen;
+        this.gamepadManager = gamepadManager;
         this.keyBindingController = keyBindingController;
     }
 
@@ -40,8 +48,8 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
         int finalSlot = Math.min(firstSlot + SLOTS_PER_PAGE, RadialMenuConfigCodec.SLOT_COUNT);
         for (int slot = firstSlot; slot < finalSlot; slot++) {
             int row = slot - firstSlot;
-            int buttonY = 55 + row * 27;
-            String identifier = Config.getRadialMenuEntry(slot);
+            int buttonY = 72 + row * 27;
+            String identifier = Config.getRadialMenuEntry(radialPage, slot);
             RegisteredKeyBinding binding = keyBindingController.findRegisteredBinding(identifier);
             String label = identifier.isEmpty() ? "(empty)"
                 : binding == null ? "\u00A7cMissing action" : binding.getDisplayName();
@@ -51,6 +59,18 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
             GuiButton clearButton = new GuiButton(CLEAR_BUTTON_BASE + slot, width / 2 + 140, buttonY, 50, 20, "Clear");
             clearButton.enabled = !identifier.isEmpty();
             buttonList.add(clearButton);
+        }
+        int radialPageWidth = 100;
+        for (RadialMenuPage candidate : RadialMenuPage.values()) {
+            GuiButton radialPageButton = new GuiButton(
+                RADIAL_PAGE_BASE + candidate.ordinal(),
+                width / 2 - 155 + candidate.ordinal() * 105,
+                44,
+                radialPageWidth,
+                20,
+                candidate.displayName);
+            radialPageButton.enabled = candidate != radialPage;
+            buttonList.add(radialPageButton);
         }
 
         GuiButton previousButton = new GuiButton(PREVIOUS_PAGE, width / 2 - 155, height - 52, 80, 20, "< Previous");
@@ -63,14 +83,26 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
     }
 
     @Override
+    public void updateScreen() {
+        super.updateScreen();
+        if (gamepadManager.wasButtonPressed(ControllerButton.LEFT_SHOULDER)) {
+            setRadialPage(RadialMenuPage.LEFT_SHOULDER);
+        } else if (gamepadManager.wasButtonPressed(ControllerButton.RIGHT_SHOULDER)) {
+            setRadialPage(RadialMenuPage.RIGHT_SHOULDER);
+        }
+    }
+
+    @Override
     protected void actionPerformed(GuiButton button) {
         if (button.id >= SLOT_BUTTON_BASE && button.id < SLOT_BUTTON_BASE + RadialMenuConfigCodec.SLOT_COUNT) {
             int slot = button.id - SLOT_BUTTON_BASE;
-            mc.displayGuiScreen(new GuiRadialMenuActionScreen(this, keyBindingController, slot));
+            mc.displayGuiScreen(new GuiRadialMenuActionScreen(this, keyBindingController, radialPage, slot));
         } else if (button.id >= CLEAR_BUTTON_BASE && button.id < CLEAR_BUTTON_BASE + RadialMenuConfigCodec.SLOT_COUNT) {
-            Config.setRadialMenuEntry(button.id - CLEAR_BUTTON_BASE, "");
+            Config.setRadialMenuEntry(radialPage, button.id - CLEAR_BUTTON_BASE, "");
             Config.saveControllerSettings();
             initGui();
+        } else if (button.id >= RADIAL_PAGE_BASE && button.id < RADIAL_PAGE_BASE + RadialMenuPage.values().length) {
+            setRadialPage(RadialMenuPage.values()[button.id - RADIAL_PAGE_BASE]);
         } else if (button.id == PREVIOUS_PAGE && page > 0) {
             page--;
             initGui();
@@ -111,7 +143,7 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
                 fontRendererObj,
                 label,
                 width / 2 - 45 - fontRendererObj.getStringWidth(label),
-                61 + row * 27,
+                78 + row * 27,
                 0xFFFFFF);
         }
 
@@ -122,6 +154,15 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
             height - 46,
             0xA0A0A0);
         super.drawScreen(mouseX, mouseY, partialTicks);
+    }
+
+    private void setRadialPage(RadialMenuPage requestedPage) {
+        if (requestedPage == radialPage) {
+            return;
+        }
+        radialPage = requestedPage;
+        page = 0;
+        initGui();
     }
 
     private int pageCount() {

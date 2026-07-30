@@ -21,11 +21,16 @@ import static org.lwjgl.sdl.SDLStdinc.SDL_free;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
+import dev.gtnhcontroller.Config;
 import dev.gtnhcontroller.GTNHController;
 import me.eigenraven.lwjgl3ify.api.Lwjgl3Aware;
 
@@ -43,6 +48,7 @@ public final class SdlGamepadManager {
     private final boolean[] previousButtons = new boolean[SDL_GAMEPAD_BUTTON_COUNT];
 
     private int ticksUntilScan;
+    private int gamepadInstanceId = -1;
     private long gamepad = NULL;
     private String gamepadName = "";
 
@@ -67,7 +73,7 @@ public final class SdlGamepadManager {
             }
 
             ticksUntilScan = rescanIntervalTicks;
-            connectFirstAvailableGamepad();
+            connectSelectedGamepad();
         }
 
         if (gamepad != NULL) {
@@ -80,7 +86,54 @@ public final class SdlGamepadManager {
     }
 
     public String getStatusLine() {
-        return isConnected() ? "Connected: " + gamepadName : "No gamepad detected";
+        if (isConnected()) {
+            return "Connected: " + gamepadName;
+        }
+        return ControllerSelection.isAutomatic(Config.controllerSelection) ? "No gamepad detected"
+            : "Waiting for selected controller";
+    }
+
+    public List<ControllerDevice> getAvailableGamepads() {
+        List<ControllerDevice> devices = new ArrayList<ControllerDevice>();
+        IntBuffer gamepads = SDL_GetGamepads();
+        if (gamepads == null) {
+            GTNHController.LOG.warn("SDL_GetGamepads failed: {}", SDL_GetError());
+            return devices;
+        }
+
+        Map<String, Integer> occurrences = new HashMap<String, Integer>();
+        try {
+            int firstIndex = gamepads.position();
+            for (int index = 0; index < gamepads.remaining(); index++) {
+                int instanceId = gamepads.get(firstIndex + index);
+                String name = readGamepadName(instanceId);
+                if (name == null) {
+                    continue;
+                }
+                int occurrence = nextOccurrence(occurrences, name);
+                String displayName = occurrence == 1 ? name : name + " (" + occurrence + ")";
+                devices.add(
+                    new ControllerDevice(
+                        ControllerSelection.createKey(name, occurrence),
+                        displayName,
+                        instanceId == gamepadInstanceId));
+            }
+        } finally {
+            SDL_free(gamepads);
+        }
+        return devices;
+    }
+
+    public void selectController(String selectionKey) {
+        Config.controllerSelection = ControllerSelection.isAutomatic(selectionKey) ? ControllerSelection.AUTOMATIC
+            : selectionKey;
+        Config.saveControllerSettings();
+        disconnect();
+        ticksUntilScan = 0;
+        connectSelectedGamepad();
+        if (gamepad != NULL) {
+            pollState();
+        }
     }
 
     public float getAxis(int axis) {
@@ -171,7 +224,7 @@ public final class SdlGamepadManager {
         return pressed.length() == 0 ? "-" : pressed.toString();
     }
 
-    private void connectFirstAvailableGamepad() {
+    private void connectSelectedGamepad() {
         IntBuffer gamepads = SDL_GetGamepads();
         if (gamepads == null) {
             GTNHController.LOG.warn("SDL_GetGamepads failed: {}", SDL_GetError());
@@ -179,6 +232,7 @@ public final class SdlGamepadManager {
         }
 
         try {
+            Map<String, Integer> occurrences = new HashMap<String, Integer>();
             int firstIndex = gamepads.position();
             for (int index = 0; index < gamepads.remaining(); index++) {
                 int instanceId = gamepads.get(firstIndex + index);
@@ -188,15 +242,50 @@ public final class SdlGamepadManager {
                     continue;
                 }
 
+                String detectedName = SDL_GetGamepadName(openedGamepad);
+                String name = detectedName == null ? "Unknown controller" : detectedName;
+                int occurrence = nextOccurrence(occurrences, name);
+                String selectionKey = ControllerSelection.createKey(name, occurrence);
+                if (!ControllerSelection.isAutomatic(Config.controllerSelection)
+                    && !Config.controllerSelection.equals(selectionKey)) {
+                    SDL_CloseGamepad(openedGamepad);
+                    continue;
+                }
+
                 gamepad = openedGamepad;
-                String detectedName = SDL_GetGamepadName(gamepad);
-                gamepadName = detectedName == null ? "Unknown controller" : detectedName;
+                gamepadInstanceId = instanceId;
+                gamepadName = name;
                 GTNHController.LOG.info("Connected SDL gamepad {} ({})", gamepadName, instanceId);
                 return;
             }
         } finally {
             SDL_free(gamepads);
         }
+    }
+
+    private String readGamepadName(int instanceId) {
+        if (instanceId == gamepadInstanceId && gamepad != NULL) {
+            return gamepadName;
+        }
+
+        long openedGamepad = SDL_OpenGamepad(instanceId);
+        if (openedGamepad == NULL) {
+            GTNHController.LOG.warn("Could not inspect SDL gamepad {}: {}", instanceId, SDL_GetError());
+            return null;
+        }
+        try {
+            String detectedName = SDL_GetGamepadName(openedGamepad);
+            return detectedName == null ? "Unknown controller" : detectedName;
+        } finally {
+            SDL_CloseGamepad(openedGamepad);
+        }
+    }
+
+    private static int nextOccurrence(Map<String, Integer> occurrences, String name) {
+        Integer previous = occurrences.get(name);
+        int occurrence = previous == null ? 1 : previous.intValue() + 1;
+        occurrences.put(name, Integer.valueOf(occurrence));
+        return occurrence;
     }
 
     private void pollState() {
@@ -226,9 +315,12 @@ public final class SdlGamepadManager {
     }
 
     private void disconnect() {
-        GTNHController.LOG.info("Disconnected SDL gamepad {}", gamepadName);
-        SDL_CloseGamepad(gamepad);
+        if (gamepad != NULL) {
+            GTNHController.LOG.info("Disconnected SDL gamepad {}", gamepadName);
+            SDL_CloseGamepad(gamepad);
+        }
         gamepad = NULL;
+        gamepadInstanceId = -1;
         gamepadName = "";
 
         for (int axis = 0; axis < axes.length; axis++) {

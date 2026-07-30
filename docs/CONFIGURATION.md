@@ -8,6 +8,7 @@ The full configuration file is `config\gtnhcontroller.cfg`. Start the game once 
 
 The main screen contains:
 
+- **Select Controller:** chooses Automatic or one of the currently connected SDL gamepads.
 - **Gameplay Controls:** enables or disables in-world controller input.
 - **GUI Controls:** enables or disables controller input in menus.
 - **Auto Jump:** automatically jumps over a one-block rise when there is enough clearance.
@@ -15,9 +16,11 @@ The main screen contains:
 - **Modes:** edits accessibility activation behavior.
 - **GUI Bindings:** edits cursor, click, navigation and scrolling actions.
 - **Sensitivity:** edits movement response, camera sensitivity and cursor sensitivity.
+- **Deadzones:** separately edits movement, camera, cursor and trigger deadzones.
+- **Axis Inversion:** independently inverts camera X/Y and GUI cursor X/Y.
 - **Navigation:** edits directional target types, repeat timing and precision-cursor speed.
 - **Minecraft & Mod:** maps controller inputs to registered Minecraft and mod keybindings.
-- **Radial Menu:** assigns up to eight registered actions to radial directions.
+- **Radial Menu:** assigns up to 24 registered actions across Base, Hold LB and Hold RB pages.
 
 ## Accessibility activation modes
 
@@ -50,12 +53,18 @@ available in-game.
 Core actions already handled by the controller gameplay page are excluded to prevent two systems from driving the
 same action. A red `!` marks an input shared with another gameplay binding.
 
+Both Gameplay Bindings and Minecraft & Mod Bindings have Primary and Modifier layers. First bind the core
+`Modifier Layer` action on the Primary gameplay page, then switch either editor to `Layer: Modifier` and add the
+alternate mappings. The modifier is active only while held and defaults to `NONE`, so upgrading does not replace any
+existing controls.
+
 Mods that read raw LWJGL keyboard state instead of registered keybindings may require dedicated compatibility code.
 
 ## Radial menu
 
 Hold the configured Radial Action Menu input, aim with the right stick or D-pad and release to activate the selected
-action once. Return the stick to the center or press Back to cancel.
+action once. Hold Left Shoulder or Right Shoulder for the corresponding extra page; release the shoulder to return to
+Base. If both shoulders are held, Base is used. Return the stick to the center or press Back to cancel.
 
 Slots are empty by default. Missing actions from removed mods are displayed as missing and never silently replaced
 with a similarly named action.
@@ -69,6 +78,7 @@ with a similarly named action.
 ### Controller
 
 - `rescanIntervalTicks`: how often to scan while no controller is connected.
+- `selected`: `AUTO` or the stable name/occurrence key selected by the in-game controller screen.
 
 ### Controls
 
@@ -80,8 +90,8 @@ with a similarly named action.
 - `moveDeadZone` and `lookDeadZone`: suppress stick drift.
 - `moveCurveExponent` and `lookCurveExponent`: tune precision near stick center.
 - `lookSpeed`: maximum camera rotation in degrees per second.
-- `triggerThreshold`: trigger travel required before Attack or Use becomes active.
-- `invertLookY`: invert vertical camera movement.
+- `triggerThreshold`: trigger deadzone before a trigger binding becomes active.
+- `invertLookX` and `invertLookY`: independently invert camera movement.
 
 ### Activation Modes
 
@@ -97,6 +107,14 @@ with a similarly named action.
 - `cursorSpeed`: maximum cursor speed in display pixels per second.
 - `cursorAcceleration`: how gradually the cursor reaches its requested speed.
 - `cursorDeceleration`: how quickly the cursor stops or reverses.
+- `invertCursorX` and `invertCursorY`: independently invert GUI cursor movement.
+
+### Binding layers
+
+- `bindings`: primary core gameplay and GUI bindings.
+- `modifierBindings`: alternate core gameplay bindings used while Modifier Layer is held.
+- `modBindings`: primary registered Minecraft/mod bindings.
+- `modifierModBindings`: alternate registered Minecraft/mod bindings.
 
 ### GUI Navigation
 

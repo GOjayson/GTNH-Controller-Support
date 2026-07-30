@@ -15,6 +15,7 @@ import net.minecraft.client.gui.GuiTextField;
 import org.lwjgl.input.Keyboard;
 
 import dev.gtnhcontroller.Config;
+import dev.gtnhcontroller.client.input.ControllerBindingLayer;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.RegisteredKeyBinding;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
@@ -31,6 +32,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
     private static final int PREVIOUS_PAGE = 301;
     private static final int NEXT_PAGE = 302;
     private static final int DONE = 303;
+    private static final int TOGGLE_LAYER = 304;
     private static final float CAPTURE_TRIGGER_THRESHOLD = 0.50F;
     private static final int FIRST_ROW_Y = 70;
     private static final int ROW_HEIGHT = 22;
@@ -45,6 +47,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
     private GuiTextField searchField;
     private int categoryIndex;
     private int page;
+    private ControllerBindingLayer bindingLayer = ControllerBindingLayer.PRIMARY;
     private RegisteredKeyBinding captureBinding;
     private boolean captureArmed;
     private boolean waitingForCapturedInputRelease;
@@ -124,7 +127,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
             beginCapture(visibleBinding(button.id - BINDING_BUTTON_BASE));
         } else if (button.id >= CLEAR_BUTTON_BASE && button.id < CLEAR_BUTTON_BASE + rowCount) {
             RegisteredKeyBinding binding = visibleBinding(button.id - CLEAR_BUTTON_BASE);
-            keyBindingController.setBinding(binding.getIdentifier(), "NONE");
+            keyBindingController.setBinding(binding.getIdentifier(), "NONE", bindingLayer);
             waitForInputRelease();
         } else if (button.id == CATEGORY) {
             categoryIndex = (categoryIndex + 1) % categories.size();
@@ -135,6 +138,10 @@ public final class GuiModKeyBindingScreen extends GuiScreen
             rebuildButtons();
         } else if (button.id == NEXT_PAGE && page < pageCount() - 1) {
             page++;
+            rebuildButtons();
+        } else if (button.id == TOGGLE_LAYER) {
+            bindingLayer = bindingLayer == ControllerBindingLayer.PRIMARY ? ControllerBindingLayer.MODIFIER
+                : ControllerBindingLayer.PRIMARY;
             rebuildButtons();
         } else if (button.id == DONE) {
             mc.displayGuiScreen(parentScreen);
@@ -200,12 +207,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
         if (filteredBindings.isEmpty()) {
             drawCenteredString(fontRendererObj, "No matching registered key bindings", width / 2, 92, 0xA0A0A0);
         } else if (pageCount() > 1) {
-            drawCenteredString(
-                fontRendererObj,
-                "Page " + (page + 1) + " / " + pageCount(),
-                width / 2,
-                height - 46,
-                0xA0A0A0);
+            drawCenteredString(fontRendererObj, "Page " + (page + 1) + " / " + pageCount(), width / 2, 33, 0xA0A0A0);
         }
 
         super.drawScreen(mouseX, mouseY, partialTicks);
@@ -301,7 +303,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
             boolean rowEnabled = captureBinding == null && !waitingForCapturedInputRelease;
             bindingButton.enabled = rowEnabled || binding == captureBinding;
             clearButton.enabled = rowEnabled
-                && !"NONE".equalsIgnoreCase(Config.getModKeyBinding(binding.getIdentifier()));
+                && !"NONE".equalsIgnoreCase(Config.getModKeyBinding(binding.getIdentifier(), bindingLayer));
             buttonList.add(bindingButton);
             buttonList.add(clearButton);
         }
@@ -314,6 +316,15 @@ public final class GuiModKeyBindingScreen extends GuiScreen
             buttonList.add(previousButton);
             buttonList.add(nextButton);
         }
+        GuiButton layerButton = new GuiButton(
+            TOGGLE_LAYER,
+            width / 2 - 75,
+            height - 52,
+            150,
+            20,
+            "Layer: " + bindingLayer.displayName);
+        layerButton.enabled = captureBinding == null && !waitingForCapturedInputRelease;
+        buttonList.add(layerButton);
 
         GuiButton doneButton = new GuiButton(DONE, width / 2 - 100, height - 28, 200, 20, "Done");
         doneButton.enabled = captureBinding == null && !waitingForCapturedInputRelease;
@@ -321,8 +332,10 @@ public final class GuiModKeyBindingScreen extends GuiScreen
     }
 
     private String formatBinding(RegisteredKeyBinding binding) {
-        String formatted = ControllerBindingDisplay.format(Config.getModKeyBinding(binding.getIdentifier()));
-        return keyBindingController.hasConflict(binding.getIdentifier()) ? "\u00A7c! " + formatted : formatted;
+        String formatted = ControllerBindingDisplay
+            .format(Config.getModKeyBinding(binding.getIdentifier(), bindingLayer));
+        return keyBindingController.hasConflict(binding.getIdentifier(), bindingLayer) ? "\u00A7c! " + formatted
+            : formatted;
     }
 
     private void beginCapture(RegisteredKeyBinding binding) {
@@ -333,7 +346,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
     }
 
     private void applyBinding(String bindingSpecification) {
-        keyBindingController.setBinding(captureBinding.getIdentifier(), bindingSpecification);
+        keyBindingController.setBinding(captureBinding.getIdentifier(), bindingSpecification, bindingLayer);
         waitForInputRelease();
     }
 
