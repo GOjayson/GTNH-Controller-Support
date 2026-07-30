@@ -2,6 +2,12 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.1.1
+
+### Fixed
+
+- Prioritized a focused NEI search field over Minecraft's Creative search field and added a direct Backspace fallback.
+
 ## 1.1.0
 
 ### Fixed

@@ -13,6 +13,8 @@ import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
 
+import org.lwjgl.input.Keyboard;
+
 import dev.gtnhcontroller.GTNHController;
 import dev.gtnhcontroller.mixins.CreativeContainerControllerAccessor;
 import dev.gtnhcontroller.mixins.GuiContainerCreativeControllerAccessor;
@@ -106,18 +108,15 @@ final class GuiInputCompatibility {
 
     void keyTyped(GuiScreen screen, char typedCharacter, int keyCode) {
         /*
-         * Creative owns its search field. Sending its text through NEI first lets an NEI handler consume the event
-         * before GuiContainerCreative can update the filtered item list.
-         */
-        if (screen instanceof GuiContainerCreative) {
-            dispatchCreativeText((GuiContainerCreative) screen, typedCharacter, keyCode);
-            return;
-        }
-        /*
-         * NEI's focused TextField is not a field on the GuiContainer. Calling the focused widget directly preserves
-         * TextField.onTextChange, which refreshes NEI's item filter after each on-screen-keyboard character.
+         * NEI draws its search field over every GuiContainer, including GuiContainerCreative. Give an explicitly
+         * focused NEI field first refusal or the Creative branch below will send the character to Minecraft's own
+         * search field and return before NEI ever sees it.
          */
         if (neiFocusedTextDispatcher != null && neiFocusedTextDispatcher.dispatch(screen, typedCharacter, keyCode)) {
+            return;
+        }
+        if (screen instanceof GuiContainerCreative) {
+            dispatchCreativeText((GuiContainerCreative) screen, typedCharacter, keyCode);
             return;
         }
 
@@ -354,12 +353,15 @@ final class GuiInputCompatibility {
             }
 
             try {
-                Object focusedWidget = getInputFocusedMethod == null ? null : getInputFocusedMethod.invoke(null);
-                if (focusedWidget == null && searchField != null) {
+                Object focusedWidget = null;
+                if (searchField != null) {
                     Object candidate = searchField.get(null);
                     if (candidate != null && Boolean.TRUE.equals(focusedMethod.invoke(candidate))) {
                         focusedWidget = candidate;
                     }
+                }
+                if (focusedWidget == null && getInputFocusedMethod != null) {
+                    focusedWidget = getInputFocusedMethod.invoke(null);
                 }
                 if (focusedWidget == null) {
                     return false;
@@ -370,10 +372,15 @@ final class GuiInputCompatibility {
                     handleKeyPressMethod
                         .invoke(focusedWidget, Integer.valueOf(keyCode), Character.valueOf(typedCharacter)));
                 String currentText = (String) textMethod.invoke(focusedWidget);
-                if (isPrintable(typedCharacter) && previousText.equals(currentText)) {
+                if (previousText.equals(currentText)) {
                     Object internalField = internalTextField.get(focusedWidget);
                     if (internalField instanceof GuiTextField) {
-                        ((GuiTextField) internalField).writeText(String.valueOf(typedCharacter));
+                        GuiTextField guiTextField = (GuiTextField) internalField;
+                        if (isPrintable(typedCharacter)) {
+                            guiTextField.writeText(String.valueOf(typedCharacter));
+                        } else if (keyCode == Keyboard.KEY_BACK) {
+                            guiTextField.deleteFromCursor(-1);
+                        }
                         currentText = (String) textMethod.invoke(focusedWidget);
                         if (!previousText.equals(currentText)) {
                             onTextChangeMethod.invoke(focusedWidget, previousText);

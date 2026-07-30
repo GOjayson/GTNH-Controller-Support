@@ -114,6 +114,8 @@ Focus a text field with GUI Confirm before opening the keyboard. Verify that it:
 - enters lowercase letters, capitals, digits, spaces and symbols;
 - sends Backspace and Enter;
 - immediately updates Creative inventory and NEI search results;
+- while the Creative inventory is open, types into whichever of the NEI or vanilla Creative search fields is focused
+  without changing the other field, including Backspace;
 - enters text in chat, a server address and at least one item-naming screen.
 
 ## Release verification
