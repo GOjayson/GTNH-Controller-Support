@@ -68,4 +68,19 @@ public enum ControllerButton {
     ControllerButton(int sdlIndex) {
         this.sdlIndex = sdlIndex;
     }
+
+    public String getDisplayName() {
+        String[] words = name().split("_");
+        StringBuilder displayName = new StringBuilder();
+        for (String word : words) {
+            if (displayName.length() > 0) {
+                displayName.append(' ');
+            }
+            displayName.append(word.charAt(0));
+            displayName.append(
+                word.substring(1)
+                    .toLowerCase(java.util.Locale.ROOT));
+        }
+        return displayName.toString();
+    }
 }

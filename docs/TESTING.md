@@ -23,6 +23,21 @@ release; test the exact release JAR as well.
 6. Connect a second controller, select each device in turn, and verify that only the selected device controls the game.
 7. Return selection to Automatic and verify that the first available device reconnects.
 
+## Calibration and controller test
+
+1. Open `Controller Setup & Test -> Calibration Wizard`.
+2. Leave the controller untouched during the rest phase and verify the live values remain visible.
+3. Rotate both sticks and fully press both triggers during the range phase.
+4. Verify each range result reaches `OK` and the suggested values are plausible.
+5. On the results page, verify the controller cursor and physical mouse cursor are visible and responsive.
+6. Apply the suggestions and verify Movement, Camera, Cursor and Trigger values changed under Deadzones.
+7. Run the wizard incompletely and confirm it warns instead of silently changing anything.
+8. Open `Test Controller Inputs` and test every stick, trigger, face button, shoulder, D-pad and stick click.
+9. If available, test paddles, touchpad and miscellaneous buttons; unsupported inputs must remain gray.
+10. Verify raw values and post-deadzone values differ inside the configured deadzone.
+11. Tap GUI Back and verify it appears pressed without closing the screen.
+12. Hold GUI Back for three seconds and confirm the countdown reaches zero and the screen closes.
+
 ## Main menu and virtual cursor
 
 - Move the right stick in all four directions.
@@ -46,7 +61,7 @@ release; test the exact release JAR as well.
 
 ## Accessibility modes
 
-Open `Controller... -> Modes...`.
+Open `Controller support -> Accessibility modes`.
 
 - **Sneak, Attack and Use:** verify Hold, Toggle and Press.
 - **Sprint:** move forward first. Hold and Toggle must start sprinting without a double-tap. Press should start
@@ -100,7 +115,18 @@ GUI Confirm can drag the map and both shoulder actions zoom it.
 - Assign a rear paddle if SDL exposes one independently.
 - Search for a GTNH mod action and bind it.
 - Assign one input to two gameplay actions and verify conflict markers.
+- Hover every red conflict marker and verify all conflicting core and mod actions are named.
+- Search the Gameplay and GUI binding pages by partial action name and verify binding still works after filtering.
 - Test two registered actions that share the same keyboard key; only the chosen action should activate.
+
+## Rumble
+
+- Verify `Controller Setup & Test -> Rumble Feedback` accurately reports SDL rumble support.
+- Press Test Rumble at 20%, 50% and 100% and confirm the difference is noticeable.
+- Disable the master switch and verify all feedback stops.
+- Test Damage, Explosions and Mining independently with only one effect enabled at a time.
+- Trigger damage while mining and confirm the stronger damage effect is not immediately replaced by a mining pulse.
+- Test a controller without rumble and confirm all controller input still works without errors.
 
 ## Radial menu
 

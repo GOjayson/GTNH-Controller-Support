@@ -155,27 +155,58 @@ public final class ModKeyBindingController {
     }
 
     public boolean hasConflict(String identifier, ControllerBindingLayer layer) {
+        return !getConflictNames(identifier, layer).isEmpty();
+    }
+
+    public List<String> getConflictNames(String identifier, ControllerBindingLayer layer) {
+        refreshIfRegistryChanged();
         BindingState subject = states.get(identifier);
         if (subject == null || subject.getBinding(layer)
             .isEmpty()) {
-            return false;
+            return Collections.emptyList();
         }
 
+        List<String> conflicts = new ArrayList<String>();
         for (Map.Entry<String, BindingState> candidate : states.entrySet()) {
             if (!identifier.equals(candidate.getKey()) && subject.getBinding(layer)
                 .conflictsWith(
                     candidate.getValue()
                         .getBinding(layer))) {
-                return true;
+                conflicts.add(displayName(candidate.getValue().entry));
             }
         }
         for (ControllerAction action : ControllerAction.values()) {
             if (!action.guiAction && subject.getBinding(layer)
-                .conflictsWith(safeParse(Config.getBinding(action, layer), action.displayName))) {
-                return true;
+                .conflictsWith(bindingForCoreConflict(action, layer))) {
+                conflicts.add("Gameplay / " + action.displayName);
             }
         }
-        return false;
+        return Collections.unmodifiableList(conflicts);
+    }
+
+    public List<String> getConflictNamesForCoreAction(ControllerAction subjectAction,
+        ControllerBindingLayer displayedLayer) {
+        refreshIfRegistryChanged();
+        if (subjectAction.guiAction) {
+            return Collections.emptyList();
+        }
+        ControllerBinding subject = safeParse(
+            Config.getBinding(subjectAction, displayedLayer),
+            subjectAction.displayName);
+        if (subject.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        ControllerBindingLayer candidateLayer = subjectAction == ControllerAction.MODIFIER_LAYER
+            ? ControllerBindingLayer.MODIFIER
+            : displayedLayer;
+        List<String> conflicts = new ArrayList<String>();
+        for (BindingState candidate : states.values()) {
+            if (subject.conflictsWith(candidate.getBinding(candidateLayer))) {
+                conflicts.add(displayName(candidate.entry));
+            }
+        }
+        return Collections.unmodifiableList(conflicts);
     }
 
     private void refreshIfRegistryChanged() {
@@ -338,6 +369,17 @@ public final class ModKeyBindingController {
                 exception);
             return ControllerBinding.parse("NONE");
         }
+    }
+
+    private static ControllerBinding bindingForCoreConflict(ControllerAction action, ControllerBindingLayer layer) {
+        ControllerBindingLayer effectiveLayer = action == ControllerAction.MODIFIER_LAYER
+            ? ControllerBindingLayer.PRIMARY
+            : layer;
+        return safeParse(Config.getBinding(action, effectiveLayer), action.displayName);
+    }
+
+    private static String displayName(RegisteredKeyBinding binding) {
+        return binding.getCategoryName() + " / " + binding.getDisplayName();
     }
 
     private static final class BindingState {

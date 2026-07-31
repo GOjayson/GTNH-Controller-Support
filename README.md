@@ -35,16 +35,19 @@ YouTube video.
 - True analog movement and camera control with separate movement, camera, cursor and trigger deadzones.
 - Independent camera X/Y and GUI cursor X/Y inversion.
 - In-game controller selection when more than one SDL gamepad is connected.
+- Guided calibration with live drift detection, range checks and suggested deadzones/trigger thresholds.
+- Full controller test screen for sticks, triggers, buttons, paddles and miscellaneous SDL inputs.
 - Controller-driven cursor for menus, inventories, machine interfaces and BetterQuesting.
 - Controller panning and zooming for JourneyMap and Galacticraft's celestial map.
 - Rebindable gameplay and GUI actions, including SDL-exposed triggers, paddles and miscellaneous buttons.
 - Primary and hold-modifier binding layers for core, Minecraft and mod actions.
-- Searchable bindings for registered Minecraft and mod actions.
+- Searchable core, Minecraft and mod bindings with exact conflict details.
 - Three eight-direction radial pages for up to 24 frequently used mod actions.
 - Directional GUI navigation, scrolling and a precision-cursor mode.
 - On-screen keyboard for focused vanilla, Creative inventory and NEI text fields.
 - Optional Auto Jump and Hold/Toggle swimming assistance.
 - Hold, Toggle and Press activation modes for Sneak, Sprint, Attack and Use.
+- Optional configurable rumble for damage, explosions and mining on supported controllers.
 - Safe hand-off between controller, mouse and keyboard.
 - Live controller diagnostics on the F3 debug screen.
 
@@ -63,7 +66,8 @@ GTNH 2.8.4 ships an older lwjgl3ify version without the SDL3 API required by thi
 2. Download the normal mod JAR. Do not download a `dev` or `sources` JAR.
 3. Place the JAR in the `mods` folder of a separate GTNH 2.9.x instance.
 4. Connect the controller and start the game.
-5. Open `Options -> Controls -> Controller...` to configure it.
+5. Open `Options -> Controls -> Controller support` to configure it.
+6. Open `Controller Setup & Test -> Calibration Wizard` before fine-tuning deadzones manually.
 
 Use a test instance and back up important worlds before adding an experimental community mod.
 
@@ -74,6 +78,9 @@ controllers can work when SDL recognizes them as gamepads.
 
 Rear buttons are independently bindable only when the controller firmware exposes them as paddles or miscellaneous
 buttons. Some controllers make rear buttons duplicate ordinary buttons, which software cannot distinguish.
+
+Rumble is also hardware and driver dependent. The setup screen reports whether SDL says the selected controller
+supports it; unsupported controllers continue to work without haptics.
 
 For the first test, use USB and disable Steam Input, DS4Windows, JoyToKey and similar remapping software. A second
 mapper can cause every controller action to fire twice.
@@ -118,12 +125,12 @@ All core actions can be rebound. Drop Item is listed under Gameplay Bindings. Co
 use the `Layer: Primary/Modifier` button in either binding editor to assign a second set of actions. LT, RT and
 independently exposed rear paddles can all be used as the modifier.
 
-Additional Minecraft and mod actions can be assigned under `Controller... -> Minecraft & Mod Bindings...` or placed
+Additional Minecraft and mod actions can be assigned under `Controller support -> Minecraft & Mod Bindings` or placed
 on any of the three radial pages. Hold LB or RB while the radial menu is open to access the two extra pages.
 
 ## Accessibility modes
 
-Open `Controller... -> Modes...` to configure:
+Open `Controller support -> Accessibility modes` to configure:
 
 - **Hold:** active only while the controller input is held.
 - **Toggle:** press once to activate and again to deactivate.
@@ -135,6 +142,7 @@ menu opens, focus is lost, gameplay controls are disabled or the controller disc
 ## Known limitations
 
 - Multiple saved per-device binding profiles and merged adaptive-controller inputs are not implemented yet.
+- Calibration recommends one value per physical stick; movement and cursor can still be adjusted separately afterward.
 - Custom text widgets and mod GUIs that bypass Minecraft's normal input APIs may still need dedicated compatibility
   code.
 

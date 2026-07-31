@@ -58,6 +58,11 @@ public final class Config {
     public static float precisionCursorScale = 0.30F;
     public static int navigationInitialDelayMillis = 350;
     public static int navigationRepeatIntervalMillis = 100;
+    public static boolean rumbleEnabled = true;
+    public static boolean rumbleDamage = true;
+    public static boolean rumbleExplosions = true;
+    public static boolean rumbleMining = true;
+    public static float rumbleIntensity = 1.0F;
 
     public static String jumpBinding = "BUTTON:SOUTH";
     public static String sneakBinding = "BUTTON:EAST";
@@ -319,6 +324,24 @@ public final class Config {
             50,
             500,
             "Delay between repeated GUI navigation or scroll actions.");
+        rumbleEnabled = configuration.getBoolean(
+            "enabled",
+            "rumble",
+            rumbleEnabled,
+            "Enable controller rumble when the selected controller reports rumble support.");
+        rumbleDamage = configuration
+            .getBoolean("damage", "rumble", rumbleDamage, "Rumble when the player takes damage.");
+        rumbleExplosions = configuration
+            .getBoolean("explosions", "rumble", rumbleExplosions, "Rumble for nearby explosion sounds.");
+        rumbleMining = configuration
+            .getBoolean("mining", "rumble", rumbleMining, "Provide light periodic feedback while mining a block.");
+        rumbleIntensity = configuration.getFloat(
+            "intensity",
+            "rumble",
+            rumbleIntensity,
+            0.0F,
+            1.0F,
+            "Global multiplier applied to all controller rumble effects.");
 
         jumpBinding = getBinding(configuration, "jump", jumpBinding, "Jump while playing.");
         sneakBinding = getBinding(configuration, "sneak", sneakBinding, "Sneak while playing.");
@@ -706,6 +729,16 @@ public final class Config {
             .set(navigationInitialDelayMillis);
         configuration.get("guiNavigation", "navigationRepeatIntervalMillis", navigationRepeatIntervalMillis)
             .set(navigationRepeatIntervalMillis);
+        configuration.get("rumble", "enabled", rumbleEnabled)
+            .set(rumbleEnabled);
+        configuration.get("rumble", "damage", rumbleDamage)
+            .set(rumbleDamage);
+        configuration.get("rumble", "explosions", rumbleExplosions)
+            .set(rumbleExplosions);
+        configuration.get("rumble", "mining", rumbleMining)
+            .set(rumbleMining);
+        configuration.get("rumble", "intensity", rumbleIntensity)
+            .set(rumbleIntensity);
         for (ControllerAction action : ControllerAction.values()) {
             String binding = getBinding(action);
             configuration.get("bindings", action.configKey, binding)

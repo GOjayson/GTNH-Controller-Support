@@ -2,9 +2,11 @@ package dev.gtnhcontroller.client.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiTextField;
 
 import org.lwjgl.input.Keyboard;
 
@@ -12,6 +14,7 @@ import dev.gtnhcontroller.Config;
 import dev.gtnhcontroller.client.input.ControllerAction;
 import dev.gtnhcontroller.client.input.ControllerBindingLayer;
 import dev.gtnhcontroller.client.input.ControllerProfile;
+import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
 
 public final class GuiControllerBindingScreen extends GuiScreen
@@ -24,16 +27,20 @@ public final class GuiControllerBindingScreen extends GuiScreen
     private static final int RESET_DEFAULTS = 3002;
     private static final int DONE = 3003;
     private static final int TOGGLE_LAYER = 3004;
-    private static final int ROWS_PER_PAGE = 6;
+    private static final int FIRST_ROW_Y = 68;
+    private static final int ROW_HEIGHT = 22;
     private static final float CAPTURE_TRIGGER_THRESHOLD = 0.50F;
 
     private final GuiScreen parentScreen;
     private final SdlGamepadManager gamepadManager;
     private final ControllerProfile controllerProfile;
-    private ControllerAction[] actions;
+    private final ModKeyBindingController modKeyBindingController;
+    private final List<ControllerAction> allActions = new ArrayList<ControllerAction>();
+    private final List<ControllerAction> filteredActions = new ArrayList<ControllerAction>();
     private final String title;
     private final boolean guiBindings;
 
+    private GuiTextField searchField;
     private int page;
     private ControllerBindingLayer bindingLayer = ControllerBindingLayer.PRIMARY;
     private ControllerAction captureAction;
@@ -41,44 +48,214 @@ public final class GuiControllerBindingScreen extends GuiScreen
     private boolean waitingForCapturedInputRelease;
 
     public GuiControllerBindingScreen(GuiScreen parentScreen, SdlGamepadManager gamepadManager,
-        ControllerProfile controllerProfile, boolean guiBindings) {
+        ControllerProfile controllerProfile, ModKeyBindingController modKeyBindingController, boolean guiBindings) {
         this.parentScreen = parentScreen;
         this.gamepadManager = gamepadManager;
         this.controllerProfile = controllerProfile;
+        this.modKeyBindingController = modKeyBindingController;
         this.guiBindings = guiBindings;
-        actions = getActions(guiBindings);
         title = guiBindings ? "GUI Controller Bindings" : "Gameplay Controller Bindings";
     }
 
     @Override
     public void initGui() {
-        buttonList.clear();
-        int firstAction = page * ROWS_PER_PAGE;
-        int finalAction = Math.min(firstAction + ROWS_PER_PAGE, actions.length);
+        Keyboard.enableRepeatEvents(true);
+        String previousSearch = searchField == null ? "" : searchField.getText();
+        searchField = new GuiTextField(fontRendererObj, width / 2 - 155, 43, 310, 18);
+        searchField.setMaxStringLength(100);
+        searchField.setText(previousSearch);
+        rebuildActionList();
+        filterActions();
+    }
+
+    @Override
+    public void updateScreen() {
+        super.updateScreen();
+        searchField.updateCursorCounter();
+        if (waitingForCapturedInputRelease) {
+            if (!gamepadManager.hasBindableInputDown(CAPTURE_TRIGGER_THRESHOLD)) {
+                waitingForCapturedInputRelease = false;
+                rebuildButtons();
+            }
+            return;
+        }
+        if (captureAction == null) {
+            return;
+        }
+
+        if (!captureArmed) {
+            if (!gamepadManager.hasBindableInputDown(CAPTURE_TRIGGER_THRESHOLD)) {
+                captureArmed = true;
+                rebuildButtons();
+            }
+            return;
+        }
+
+        String capturedBinding = gamepadManager.getNewBindableInput(CAPTURE_TRIGGER_THRESHOLD);
+        if (capturedBinding != null) {
+            applyBinding(capturedBinding);
+        }
+    }
+
+    @Override
+    protected void actionPerformed(GuiButton button) {
+        int visibleRows = visibleRowCount();
+        if (button.id >= BINDING_BUTTON_BASE && button.id < BINDING_BUTTON_BASE + visibleRows) {
+            beginCapture(visibleAction(button.id - BINDING_BUTTON_BASE));
+        } else if (button.id >= CLEAR_BUTTON_BASE && button.id < CLEAR_BUTTON_BASE + visibleRows) {
+            ControllerAction action = visibleAction(button.id - CLEAR_BUTTON_BASE);
+            controllerProfile.setBinding(action, "NONE", bindingLayer);
+            waitForInputRelease();
+        } else if (button.id == PREVIOUS_PAGE && page > 0) {
+            page--;
+            rebuildButtons();
+        } else if (button.id == NEXT_PAGE && page < getPageCount() - 1) {
+            page++;
+            rebuildButtons();
+        } else if (button.id == TOGGLE_LAYER && !guiBindings) {
+            bindingLayer = bindingLayer == ControllerBindingLayer.PRIMARY ? ControllerBindingLayer.MODIFIER
+                : ControllerBindingLayer.PRIMARY;
+            page = 0;
+            rebuildActionList();
+            filterActions();
+        } else if (button.id == RESET_DEFAULTS) {
+            controllerProfile.resetBindings(guiBindings, bindingLayer);
+            waitForInputRelease();
+        } else if (button.id == DONE) {
+            mc.displayGuiScreen(parentScreen);
+        }
+    }
+
+    @Override
+    protected void keyTyped(char typedCharacter, int keyCode) {
+        if (captureAction != null) {
+            if (keyCode == Keyboard.KEY_ESCAPE) {
+                waitForInputRelease();
+            } else if (keyCode == Keyboard.KEY_DELETE || keyCode == Keyboard.KEY_BACK) {
+                applyBinding("NONE");
+            }
+            return;
+        }
+        if (keyCode == Keyboard.KEY_ESCAPE) {
+            mc.displayGuiScreen(parentScreen);
+            return;
+        }
+        if (searchField.textboxKeyTyped(typedCharacter, keyCode)) {
+            page = 0;
+            filterActions();
+            return;
+        }
+        super.keyTyped(typedCharacter, keyCode);
+    }
+
+    @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        searchField.mouseClicked(mouseX, mouseY, mouseButton);
+        super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
+
+    @Override
+    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        drawDefaultBackground();
+        drawCenteredString(fontRendererObj, title, width / 2, 10, 0xFFFFFF);
+        drawCenteredString(fontRendererObj, statusLine(), width / 2, 25, 0xA0A0A0);
+
+        if (searchField.getText()
+            .isEmpty() && !searchField.isFocused()) {
+            drawString(
+                fontRendererObj,
+                "Search actions",
+                searchField.xPosition + 4,
+                searchField.yPosition + 5,
+                0x707070);
+        }
+
+        int firstAction = page * rowsPerPage();
+        int finalAction = Math.min(firstAction + rowsPerPage(), filteredActions.size());
         for (int actionIndex = firstAction; actionIndex < finalAction; actionIndex++) {
             int row = actionIndex - firstAction;
-            int buttonY = 48 + row * 22;
-            ControllerAction action = actions[actionIndex];
-            String bindingLabel = action == captureAction ? (captureArmed ? "> Press input <" : "Release inputs...")
-                : ControllerBindingDisplay.format(Config.getBinding(action, bindingLayer));
+            String actionName = filteredActions.get(actionIndex).displayName;
+            drawString(
+                fontRendererObj,
+                actionName,
+                width / 2 - 45 - fontRendererObj.getStringWidth(actionName),
+                FIRST_ROW_Y + 6 + row * ROW_HEIGHT,
+                0xFFFFFF);
+        }
+
+        if (filteredActions.isEmpty()) {
+            drawCenteredString(fontRendererObj, "No matching controller actions", width / 2, 94, 0xA0A0A0);
+        }
+        super.drawScreen(mouseX, mouseY, partialTicks);
+        searchField.drawTextBox();
+        drawConflictTooltip(mouseX, mouseY);
+    }
+
+    @Override
+    public void onGuiClosed() {
+        Keyboard.enableRepeatEvents(false);
+        super.onGuiClosed();
+    }
+
+    @Override
+    public boolean isCapturingControllerInput() {
+        return captureAction != null || waitingForCapturedInputRelease;
+    }
+
+    private void rebuildActionList() {
+        allActions.clear();
+        for (ControllerAction action : ControllerAction.values()) {
+            if (action.guiAction == guiBindings
+                && !(bindingLayer == ControllerBindingLayer.MODIFIER && action == ControllerAction.MODIFIER_LAYER)) {
+                allActions.add(action);
+            }
+        }
+    }
+
+    private void filterActions() {
+        String query = searchField.getText()
+            .trim()
+            .toLowerCase(Locale.ROOT);
+        filteredActions.clear();
+        for (ControllerAction action : allActions) {
+            if (query.isEmpty() || action.displayName.toLowerCase(Locale.ROOT)
+                .contains(query)
+                || action.configKey.toLowerCase(Locale.ROOT)
+                    .contains(query)) {
+                filteredActions.add(action);
+            }
+        }
+        page = Math.min(page, getPageCount() - 1);
+        rebuildButtons();
+    }
+
+    private void rebuildButtons() {
+        buttonList.clear();
+        int firstAction = page * rowsPerPage();
+        int finalAction = Math.min(firstAction + rowsPerPage(), filteredActions.size());
+        for (int actionIndex = firstAction; actionIndex < finalAction; actionIndex++) {
+            int row = actionIndex - firstAction;
+            ControllerAction action = filteredActions.get(actionIndex);
+            String bindingLabel = action == captureAction ? (captureArmed ? "> Press input <" : "Release inputs")
+                : formatBinding(action);
 
             GuiButton bindingButton = new GuiButton(
-                BINDING_BUTTON_BASE + actionIndex,
+                BINDING_BUTTON_BASE + row,
                 width / 2 - 40,
-                buttonY,
+                FIRST_ROW_Y + row * ROW_HEIGHT,
                 150,
                 20,
                 bindingLabel);
             GuiButton clearButton = new GuiButton(
-                CLEAR_BUTTON_BASE + actionIndex,
+                CLEAR_BUTTON_BASE + row,
                 width / 2 + 115,
-                buttonY,
+                FIRST_ROW_Y + row * ROW_HEIGHT,
                 40,
                 20,
                 "Clear");
             boolean rowEnabled = captureAction == null && !waitingForCapturedInputRelease;
             bindingButton.enabled = rowEnabled || action == captureAction;
-            clearButton.enabled = rowEnabled;
+            clearButton.enabled = rowEnabled && !"NONE".equalsIgnoreCase(Config.getBinding(action, bindingLayer));
             buttonList.add(bindingButton);
             buttonList.add(clearButton);
         }
@@ -112,113 +289,44 @@ public final class GuiControllerBindingScreen extends GuiScreen
         buttonList.add(doneButton);
     }
 
-    @Override
-    public void updateScreen() {
-        super.updateScreen();
-        if (waitingForCapturedInputRelease) {
-            if (!gamepadManager.hasBindableInputDown(CAPTURE_TRIGGER_THRESHOLD)) {
-                waitingForCapturedInputRelease = false;
-                initGui();
-            }
-            return;
-        }
-        if (captureAction == null) {
-            return;
-        }
-
-        if (!captureArmed) {
-            if (!gamepadManager.hasBindableInputDown(CAPTURE_TRIGGER_THRESHOLD)) {
-                captureArmed = true;
-                initGui();
-            }
-            return;
-        }
-
-        String capturedBinding = gamepadManager.getNewBindableInput(CAPTURE_TRIGGER_THRESHOLD);
-        if (capturedBinding != null) {
-            applyBinding(capturedBinding);
-        }
+    private String formatBinding(ControllerAction action) {
+        String formatted = ControllerBindingDisplay.format(Config.getBinding(action, bindingLayer));
+        return getConflictNames(action).isEmpty() ? formatted : "\u00A7c! " + formatted;
     }
 
-    @Override
-    protected void actionPerformed(GuiButton button) {
-        if (button.id >= BINDING_BUTTON_BASE && button.id < BINDING_BUTTON_BASE + actions.length) {
-            beginCapture(actions[button.id - BINDING_BUTTON_BASE]);
-        } else if (button.id >= CLEAR_BUTTON_BASE && button.id < CLEAR_BUTTON_BASE + actions.length) {
-            ControllerAction action = actions[button.id - CLEAR_BUTTON_BASE];
-            controllerProfile.setBinding(action, "NONE", bindingLayer);
-            waitForInputRelease();
-        } else if (button.id == PREVIOUS_PAGE && page > 0) {
-            page--;
-            initGui();
-        } else if (button.id == NEXT_PAGE && page < getPageCount() - 1) {
-            page++;
-            initGui();
-        } else if (button.id == TOGGLE_LAYER && !guiBindings) {
-            bindingLayer = bindingLayer == ControllerBindingLayer.PRIMARY ? ControllerBindingLayer.MODIFIER
-                : ControllerBindingLayer.PRIMARY;
-            page = 0;
-            actions = getActions(false, bindingLayer);
-            initGui();
-        } else if (button.id == RESET_DEFAULTS) {
-            controllerProfile.resetBindings(guiBindings, bindingLayer);
-            waitForInputRelease();
-        } else if (button.id == DONE) {
-            mc.displayGuiScreen(parentScreen);
+    private List<String> getConflictNames(ControllerAction action) {
+        List<String> conflicts = new ArrayList<String>();
+        for (ControllerAction coreConflict : controllerProfile.getConflictingActions(action, bindingLayer)) {
+            conflicts.add((coreConflict.guiAction ? "GUI / " : "Gameplay / ") + coreConflict.displayName);
         }
+        conflicts.addAll(modKeyBindingController.getConflictNamesForCoreAction(action, bindingLayer));
+        return conflicts;
     }
 
-    @Override
-    protected void keyTyped(char typedCharacter, int keyCode) {
-        if (captureAction != null) {
-            if (keyCode == Keyboard.KEY_ESCAPE) {
-                waitForInputRelease();
-            } else if (keyCode == Keyboard.KEY_DELETE || keyCode == Keyboard.KEY_BACK) {
-                applyBinding("NONE");
-            }
+    private void drawConflictTooltip(int mouseX, int mouseY) {
+        int row = (mouseY - FIRST_ROW_Y) / ROW_HEIGHT;
+        if (mouseX < width / 2 - 40 || mouseX >= width / 2 + 110
+            || mouseY < FIRST_ROW_Y
+            || row < 0
+            || row >= visibleRowCount()
+            || mouseY >= FIRST_ROW_Y + row * ROW_HEIGHT + 20) {
             return;
         }
-        if (keyCode == Keyboard.KEY_ESCAPE) {
-            mc.displayGuiScreen(parentScreen);
+        List<String> conflicts = getConflictNames(visibleAction(row));
+        if (conflicts.isEmpty()) {
             return;
         }
-        super.keyTyped(typedCharacter, keyCode);
-    }
-
-    @Override
-    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        drawDefaultBackground();
-        drawCenteredString(fontRendererObj, title, width / 2, 12, 0xFFFFFF);
-        drawCenteredString(fontRendererObj, statusLine(), width / 2, 27, 0xA0A0A0);
-
-        int firstAction = page * ROWS_PER_PAGE;
-        int finalAction = Math.min(firstAction + ROWS_PER_PAGE, actions.length);
-        for (int actionIndex = firstAction; actionIndex < finalAction; actionIndex++) {
-            int row = actionIndex - firstAction;
-            String actionName = actions[actionIndex].displayName;
-            drawString(
-                fontRendererObj,
-                actionName,
-                width / 2 - 45 - fontRendererObj.getStringWidth(actionName),
-                54 + row * 22,
-                0xFFFFFF);
-        }
-
-        if (getPageCount() > 1) {
-            drawCenteredString(fontRendererObj, "Page " + (page + 1) + " / " + getPageCount(), width / 2, 38, 0xA0A0A0);
-        }
-        super.drawScreen(mouseX, mouseY, partialTicks);
-    }
-
-    @Override
-    public boolean isCapturingControllerInput() {
-        return captureAction != null || waitingForCapturedInputRelease;
+        List<String> tooltip = new ArrayList<String>();
+        tooltip.add("\u00A7cConflicts with:");
+        tooltip.addAll(conflicts);
+        drawHoveringText(tooltip, mouseX, mouseY, fontRendererObj);
     }
 
     private void beginCapture(ControllerAction action) {
         captureAction = action;
         captureArmed = false;
-        initGui();
+        searchField.setFocused(false);
+        rebuildButtons();
     }
 
     private void applyBinding(String bindingSpecification) {
@@ -230,11 +338,25 @@ public final class GuiControllerBindingScreen extends GuiScreen
         captureAction = null;
         captureArmed = false;
         waitingForCapturedInputRelease = true;
-        initGui();
+        rebuildButtons();
+    }
+
+    private ControllerAction visibleAction(int row) {
+        return filteredActions.get(page * rowsPerPage() + row);
+    }
+
+    private int visibleRowCount() {
+        int firstAction = page * rowsPerPage();
+        return Math.max(Math.min(filteredActions.size() - firstAction, rowsPerPage()), 0);
     }
 
     private int getPageCount() {
-        return (actions.length + ROWS_PER_PAGE - 1) / ROWS_PER_PAGE;
+        int rows = rowsPerPage();
+        return Math.max((filteredActions.size() + rows - 1) / rows, 1);
+    }
+
+    private int rowsPerPage() {
+        return Math.max(Math.min((height - 126) / ROW_HEIGHT, 6), 3);
     }
 
     private String statusLine() {
@@ -245,21 +367,6 @@ public final class GuiControllerBindingScreen extends GuiScreen
             return captureArmed ? "Press a controller button or trigger - Escape cancels"
                 : "Release all controller buttons and triggers";
         }
-        return gamepadManager.getStatusLine();
-    }
-
-    private static ControllerAction[] getActions(boolean guiBindings) {
-        return getActions(guiBindings, ControllerBindingLayer.PRIMARY);
-    }
-
-    private static ControllerAction[] getActions(boolean guiBindings, ControllerBindingLayer layer) {
-        List<ControllerAction> selectedActions = new ArrayList<ControllerAction>();
-        for (ControllerAction action : ControllerAction.values()) {
-            if (action.guiAction == guiBindings
-                && !(layer == ControllerBindingLayer.MODIFIER && action == ControllerAction.MODIFIER_LAYER)) {
-                selectedActions.add(action);
-            }
-        }
-        return selectedActions.toArray(new ControllerAction[selectedActions.size()]);
+        return "Hover a red ! binding to see the exact conflicting actions";
     }
 }

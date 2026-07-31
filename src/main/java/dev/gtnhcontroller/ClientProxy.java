@@ -11,6 +11,7 @@ import dev.gtnhcontroller.client.gui.RadialMenuController;
 import dev.gtnhcontroller.client.input.ControllerProfile;
 import dev.gtnhcontroller.client.input.GameplayController;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
+import dev.gtnhcontroller.client.input.RumbleController;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
 
 public final class ClientProxy extends CommonProxy {
@@ -20,6 +21,7 @@ public final class ClientProxy extends CommonProxy {
     private GameplayController gameplayController;
     private ModKeyBindingController modKeyBindingController;
     private RadialMenuController radialMenuController;
+    private RumbleController rumbleController;
     private GuiController guiController;
 
     @Override
@@ -31,6 +33,7 @@ public final class ClientProxy extends CommonProxy {
         modKeyBindingController = new ModKeyBindingController(gamepadManager, controllerProfile);
         radialMenuController = new RadialMenuController(gamepadManager, controllerProfile, modKeyBindingController);
         gameplayController = new GameplayController(gamepadManager, controllerProfile);
+        rumbleController = new RumbleController(gamepadManager);
         guiController = new GuiController(gamepadManager, controllerProfile);
         FMLCommonHandler.instance()
             .bus()
@@ -50,8 +53,12 @@ public final class ClientProxy extends CommonProxy {
         FMLCommonHandler.instance()
             .bus()
             .register(guiController);
+        FMLCommonHandler.instance()
+            .bus()
+            .register(rumbleController);
         MinecraftForge.EVENT_BUS.register(new ControllerDebugOverlay(gamepadManager));
         MinecraftForge.EVENT_BUS.register(guiController);
+        MinecraftForge.EVENT_BUS.register(rumbleController);
         MinecraftForge.EVENT_BUS
             .register(new ControllerControlsEntry(gamepadManager, controllerProfile, modKeyBindingController));
 

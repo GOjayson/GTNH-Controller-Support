@@ -184,7 +184,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
 
         if (searchField.getText()
             .isEmpty() && !searchField.isFocused()) {
-            drawString(fontRendererObj, "Search...", searchField.xPosition + 4, searchField.yPosition + 5, 0x707070);
+            drawString(fontRendererObj, "Search", searchField.xPosition + 4, searchField.yPosition + 5, 0x707070);
         }
 
         int firstBinding = page * rowsPerPage();
@@ -212,6 +212,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
 
         super.drawScreen(mouseX, mouseY, partialTicks);
         searchField.drawTextBox();
+        drawConflictTooltip(mouseX, mouseY);
     }
 
     @Override
@@ -284,7 +285,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
         for (int bindingIndex = firstBinding; bindingIndex < finalBinding; bindingIndex++) {
             int row = bindingIndex - firstBinding;
             RegisteredKeyBinding binding = filteredBindings.get(bindingIndex);
-            String bindingLabel = captureBinding == binding ? (captureArmed ? "> Press input <" : "Release inputs...")
+            String bindingLabel = captureBinding == binding ? (captureArmed ? "> Press input <" : "Release inputs")
                 : formatBinding(binding);
             GuiButton bindingButton = new GuiButton(
                 BINDING_BUTTON_BASE + row,
@@ -338,6 +339,26 @@ public final class GuiModKeyBindingScreen extends GuiScreen
             : formatted;
     }
 
+    private void drawConflictTooltip(int mouseX, int mouseY) {
+        int row = (mouseY - FIRST_ROW_Y) / ROW_HEIGHT;
+        if (mouseX < width / 2 - 40 || mouseX >= width / 2 + 100
+            || mouseY < FIRST_ROW_Y
+            || row < 0
+            || row >= visibleRowCount()
+            || mouseY >= FIRST_ROW_Y + row * ROW_HEIGHT + 20) {
+            return;
+        }
+        List<String> conflicts = keyBindingController
+            .getConflictNames(visibleBinding(row).getIdentifier(), bindingLayer);
+        if (conflicts.isEmpty()) {
+            return;
+        }
+        List<String> tooltip = new ArrayList<String>();
+        tooltip.add("\u00A7cConflicts with:");
+        tooltip.addAll(conflicts);
+        drawHoveringText(tooltip, mouseX, mouseY, fontRendererObj);
+    }
+
     private void beginCapture(RegisteredKeyBinding binding) {
         captureBinding = binding;
         captureArmed = false;
@@ -382,7 +403,7 @@ public final class GuiModKeyBindingScreen extends GuiScreen
             return captureArmed ? "Press a controller button or trigger - Escape cancels"
                 : "Release all controller buttons and triggers";
         }
-        return "Red ! means the same input activates another gameplay action";
+        return "Hover a red ! binding to see the exact conflicting actions";
     }
 
     private static final class Category {

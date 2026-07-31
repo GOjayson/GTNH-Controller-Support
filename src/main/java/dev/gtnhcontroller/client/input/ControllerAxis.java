@@ -32,4 +32,19 @@ public enum ControllerAxis {
     public boolean isTrigger() {
         return this == LEFT_TRIGGER || this == RIGHT_TRIGGER;
     }
+
+    public String getDisplayName() {
+        String[] words = name().split("_");
+        StringBuilder displayName = new StringBuilder();
+        for (String word : words) {
+            if (displayName.length() > 0) {
+                displayName.append(' ');
+            }
+            displayName.append(word.charAt(0));
+            displayName.append(
+                word.substring(1)
+                    .toLowerCase(java.util.Locale.ROOT));
+        }
+        return displayName.toString();
+    }
 }

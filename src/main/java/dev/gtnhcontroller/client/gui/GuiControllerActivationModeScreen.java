@@ -86,7 +86,7 @@ public final class GuiControllerActivationModeScreen extends GuiScreen implement
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
-        drawCenteredString(fontRendererObj, "Accessibility Activation Modes", width / 2, 15, 0xFFFFFF);
+        drawCenteredString(fontRendererObj, "Accessibility Modes", width / 2, 15, 0xFFFFFF);
         drawCenteredString(fontRendererObj, "HOLD follows the physical input.", width / 2, 132, 0xC0C0C0);
         drawCenteredString(fontRendererObj, "TOGGLE latches. PRESS emits one game tick.", width / 2, 144, 0xC0C0C0);
         drawCenteredString(fontRendererObj, "PRESS is mainly useful for Attack or Use.", width / 2, 156, 0xC0C0C0);

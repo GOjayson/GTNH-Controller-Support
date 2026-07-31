@@ -2,6 +2,29 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.3.0
+
+### Added
+
+- Added a guided controller calibration wizard with live analog values, drift measurement, usable-range checks and
+  suggested movement, camera, cursor and trigger settings.
+- Added a controller test screen covering every SDL gamepad button, trigger, stick, paddle and miscellaneous input,
+  including unsupported-input and current-deadzone feedback.
+- Added search to the core Gameplay and GUI binding screens.
+- Added exact conflict tooltips for both core and registered Minecraft/mod bindings.
+- Added optional SDL rumble feedback for damage, nearby explosions and mining, with independent switches, a master
+  switch, global intensity and an in-game test.
+
+### Changed
+
+- Grouped controller selection, calibration, input testing and rumble under `Controller Setup & Test`.
+- Prevented low-priority mining pulses from cutting off damage, explosion or test rumble effects.
+- Made mining rumble detection compatible with Minecraft 1.7.10 by using the active attack binding and targeted block.
+- Calibration suggestions require explicit confirmation and never overwrite settings automatically.
+- Restored mouse and controller cursor control when calibration reaches its results page.
+- Added a three-second hold on the configured GUI Back input as an escape from the controller test screen.
+- Renamed the controller entry and accessibility menu, and removed trailing ellipses from controller UI labels.
+
 ## 1.2.0
 
 ### Added

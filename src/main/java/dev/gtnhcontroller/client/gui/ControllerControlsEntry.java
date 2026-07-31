@@ -66,7 +66,13 @@ public final class ControllerControlsEntry {
         ControllerButtonPlacement.Position position = ControllerButtonPlacement
             .choose(event.gui.width, leftOptionEdge, rightOptionEdge, topOptionY, event.gui.height - 53);
         event.buttonList.add(
-            new GuiButton(CONTROLLER_SETTINGS_BUTTON, position.x, position.y, position.width, 20, "Controller..."));
+            new GuiButton(
+                CONTROLLER_SETTINGS_BUTTON,
+                position.x,
+                position.y,
+                position.width,
+                20,
+                "Controller support"));
     }
 
     @SubscribeEvent

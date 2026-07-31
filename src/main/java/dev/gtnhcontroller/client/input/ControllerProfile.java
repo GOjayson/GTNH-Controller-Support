@@ -1,6 +1,9 @@
 package dev.gtnhcontroller.client.input;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import cpw.mods.fml.common.eventhandler.EventPriority;
@@ -115,6 +118,33 @@ public final class ControllerProfile {
 
     public boolean isModifierActive() {
         return isDown(ControllerAction.MODIFIER_LAYER);
+    }
+
+    public List<ControllerAction> getConflictingActions(ControllerAction subjectAction,
+        ControllerBindingLayer displayedLayer) {
+        ControllerBinding subject = bindingMap(displayedLayer).get(subjectAction);
+        if (subject == null || subject.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        ControllerBindingLayer candidateLayer = subjectAction == ControllerAction.MODIFIER_LAYER
+            ? ControllerBindingLayer.MODIFIER
+            : displayedLayer;
+        List<ControllerAction> conflicts = new ArrayList<ControllerAction>();
+        for (ControllerAction candidateAction : ControllerAction.values()) {
+            if (candidateAction == subjectAction || candidateAction.guiAction != subjectAction.guiAction) {
+                continue;
+            }
+            if (candidateLayer == ControllerBindingLayer.MODIFIER
+                && candidateAction == ControllerAction.MODIFIER_LAYER) {
+                continue;
+            }
+            ControllerBinding candidate = bindingMap(candidateLayer).get(candidateAction);
+            if (subject.conflictsWith(candidate)) {
+                conflicts.add(candidateAction);
+            }
+        }
+        return Collections.unmodifiableList(conflicts);
     }
 
     private void resetState(ControllerAction action) {

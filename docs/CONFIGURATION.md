@@ -1,6 +1,6 @@
 # Configuration
 
-Most settings can be changed in-game under `Options -> Controls -> Controller...` and apply immediately.
+Most settings can be changed in-game under `Options -> Controls -> Controller support` and apply immediately.
 
 The full configuration file is `config\gtnhcontroller.cfg`. Start the game once before editing it manually.
 
@@ -8,19 +8,46 @@ The full configuration file is `config\gtnhcontroller.cfg`. Start the game once 
 
 The main screen contains:
 
-- **Select Controller:** chooses Automatic or one of the currently connected SDL gamepads.
+- **Controller Setup & Test:** opens controller selection, calibration, live input testing and rumble configuration.
 - **Gameplay Controls:** enables or disables in-world controller input.
 - **GUI Controls:** enables or disables controller input in menus.
 - **Auto Jump:** automatically jumps over a one-block rise when there is enough clearance.
-- **Gameplay Bindings:** edits the core in-world actions.
-- **Modes:** edits accessibility activation behavior.
-- **GUI Bindings:** edits cursor, click, navigation and scrolling actions.
+- **Gameplay Bindings:** searches and edits the core in-world actions.
+- **Accessibility modes:** edits accessibility activation behavior.
+- **GUI Bindings:** searches and edits cursor, click, navigation and scrolling actions.
 - **Sensitivity:** edits movement response, camera sensitivity and cursor sensitivity.
 - **Deadzones:** separately edits movement, camera, cursor and trigger deadzones.
 - **Axis Inversion:** independently inverts camera X/Y and GUI cursor X/Y.
 - **Navigation:** edits directional target types, repeat timing and precision-cursor speed.
-- **Minecraft & Mod:** maps controller inputs to registered Minecraft and mod keybindings.
+- **Minecraft & Mod Bindings:** maps controller inputs to registered Minecraft and mod keybindings.
 - **Radial Menu:** assigns up to 24 registered actions across Base, Hold LB and Hold RB pages.
+
+## Calibration and input testing
+
+Open `Controller Setup & Test -> Calibration Wizard`. The first phase measures untouched stick/trigger drift for
+three seconds. Put the controller on a flat surface and do not touch it. The second phase asks you to rotate both
+sticks and fully press both triggers.
+
+The result recommends movement, camera and cursor deadzones plus a trigger threshold. Nothing is changed until
+`Apply Suggestions` is selected. If a control does not reach 75%, run the wizard again and make sure it is moved
+through its full range.
+
+`Test Controller Inputs` shows raw values, values after the current deadzones/curves, trigger threshold results, and
+every standardized SDL button. A gray button is not exposed by the controller's SDL mapping; this distinction is
+especially useful for rear paddles. Hold the configured GUI Back input for three seconds to leave the capture-only
+test screen.
+
+## Rumble
+
+`Controller Setup & Test -> Rumble Feedback` contains:
+
+- a master rumble switch;
+- independent Damage, Explosions and Mining switches;
+- a global 0–100% intensity;
+- a Test Rumble button.
+
+Rumble settings have no effect when the selected controller does not report SDL rumble support. Nearby explosions
+scale by distance, mining uses a light pulse, and stronger effects temporarily take priority over mining feedback.
 
 ## Accessibility activation modes
 
@@ -51,7 +78,8 @@ The mod lists actions registered in Minecraft's normal `KeyBinding` registry. Se
 available in-game.
 
 Core actions already handled by the controller gameplay page are excluded to prevent two systems from driving the
-same action. A red `!` marks an input shared with another gameplay binding.
+same action. A red `!` marks an input shared with another gameplay binding; hover it with the mouse or virtual cursor
+to see every conflicting action by name.
 
 Both Gameplay Bindings and Minecraft & Mod Bindings have Primary and Modifier layers. First bind the core
 `Modifier Layer` action on the Primary gameplay page, then switch either editor to `Layer: Modifier` and add the
@@ -93,7 +121,7 @@ with a similarly named action.
 - `triggerThreshold`: trigger deadzone before a trigger binding becomes active.
 - `invertLookX` and `invertLookY`: independently invert camera movement.
 
-### Activation Modes
+### Accessibility Modes
 
 - `swim`: `HOLD` or `TOGGLE`.
 - `sneak`, `sprint`, `attack`, `use`: `HOLD`, `TOGGLE` or `PRESS`.
@@ -123,6 +151,14 @@ with a similarly named action.
 - `precisionCursorScale`: cursor-speed multiplier while Precision is held.
 - `navigationInitialDelayMillis`: delay before held navigation begins repeating.
 - `navigationRepeatIntervalMillis`: interval between repeated navigation or scrolling actions.
+
+### Rumble
+
+- `enabled`: master rumble switch.
+- `damage`: damage feedback.
+- `explosions`: nearby explosion feedback.
+- `mining`: periodic block-mining feedback.
+- `intensity`: global effect multiplier from `0.0` to `1.0`.
 
 ## Binding syntax
 

@@ -11,12 +11,18 @@ import static org.lwjgl.sdl.SDLGamepad.SDL_GAMEPAD_AXIS_RIGHTY;
 import static org.lwjgl.sdl.SDLGamepad.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER;
 import static org.lwjgl.sdl.SDLGamepad.SDL_GAMEPAD_BUTTON_COUNT;
 import static org.lwjgl.sdl.SDLGamepad.SDL_GamepadConnected;
+import static org.lwjgl.sdl.SDLGamepad.SDL_GamepadHasAxis;
+import static org.lwjgl.sdl.SDLGamepad.SDL_GamepadHasButton;
 import static org.lwjgl.sdl.SDLGamepad.SDL_GetGamepadAxis;
 import static org.lwjgl.sdl.SDLGamepad.SDL_GetGamepadButton;
 import static org.lwjgl.sdl.SDLGamepad.SDL_GetGamepadName;
+import static org.lwjgl.sdl.SDLGamepad.SDL_GetGamepadProperties;
 import static org.lwjgl.sdl.SDLGamepad.SDL_GetGamepadStringForButton;
 import static org.lwjgl.sdl.SDLGamepad.SDL_GetGamepads;
 import static org.lwjgl.sdl.SDLGamepad.SDL_OpenGamepad;
+import static org.lwjgl.sdl.SDLGamepad.SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN;
+import static org.lwjgl.sdl.SDLGamepad.SDL_RumbleGamepad;
+import static org.lwjgl.sdl.SDLProperties.SDL_GetBooleanProperty;
 import static org.lwjgl.sdl.SDLStdinc.SDL_free;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
@@ -46,11 +52,17 @@ public final class SdlGamepadManager {
     private final short[] previousAxes = new short[SDL_GAMEPAD_AXIS_COUNT];
     private final boolean[] buttons = new boolean[SDL_GAMEPAD_BUTTON_COUNT];
     private final boolean[] previousButtons = new boolean[SDL_GAMEPAD_BUTTON_COUNT];
+    private final boolean[] supportedAxes = new boolean[SDL_GAMEPAD_AXIS_COUNT];
+    private final boolean[] supportedButtons = new boolean[SDL_GAMEPAD_BUTTON_COUNT];
 
     private int ticksUntilScan;
     private int gamepadInstanceId = -1;
     private long gamepad = NULL;
     private String gamepadName = "";
+    private boolean rumbleSupported;
+    private boolean rumbleFailureLogged;
+    private long rumbleUntilNanos;
+    private int activeRumblePriority;
 
     public SdlGamepadManager(int rescanIntervalTicks) {
         this.rescanIntervalTicks = rescanIntervalTicks;
@@ -160,6 +172,14 @@ public final class SdlGamepadManager {
         return isButtonDown(button.sdlIndex);
     }
 
+    public boolean hasAxis(ControllerAxis axis) {
+        return gamepad != NULL && isValidAxis(axis.sdlIndex) && supportedAxes[axis.sdlIndex];
+    }
+
+    public boolean hasButton(ControllerButton button) {
+        return gamepad != NULL && isValidButton(button.sdlIndex) && supportedButtons[button.sdlIndex];
+    }
+
     public boolean wasButtonPressed(int button) {
         return isValidButton(button) && buttons[button] && !previousButtons[button];
     }
@@ -224,6 +244,57 @@ public final class SdlGamepadManager {
         return pressed.length() == 0 ? "-" : pressed.toString();
     }
 
+    public boolean supportsRumble() {
+        return gamepad != NULL && rumbleSupported;
+    }
+
+    /**
+     * Starts an SDL rumble effect. A lower-priority effect cannot cut off a stronger effect that is still playing.
+     */
+    public boolean playRumble(float lowFrequency, float highFrequency, int durationMillis, RumbleEffect effect) {
+        if (!supportsRumble() || durationMillis <= 0 || effect == null) {
+            return false;
+        }
+
+        long now = System.nanoTime();
+        if (now < rumbleUntilNanos && effect.priority < activeRumblePriority) {
+            return false;
+        }
+
+        short low = toUnsignedShort(InputMath.clamp(lowFrequency, 0.0F, 1.0F));
+        short high = toUnsignedShort(InputMath.clamp(highFrequency, 0.0F, 1.0F));
+        final boolean started;
+        try {
+            started = SDL_RumbleGamepad(gamepad, low, high, durationMillis);
+        } catch (LinkageError error) {
+            disableUnavailableRumbleApi(error);
+            return false;
+        }
+        if (!started) {
+            if (!rumbleFailureLogged) {
+                GTNHController.LOG.warn("SDL controller rumble failed for {}: {}", gamepadName, SDL_GetError());
+                rumbleFailureLogged = true;
+            }
+            return false;
+        }
+
+        activeRumblePriority = effect.priority;
+        rumbleUntilNanos = now + durationMillis * 1_000_000L;
+        return true;
+    }
+
+    public void stopRumble() {
+        if (gamepad != NULL && rumbleSupported) {
+            try {
+                SDL_RumbleGamepad(gamepad, (short) 0, (short) 0, 0);
+            } catch (LinkageError error) {
+                disableUnavailableRumbleApi(error);
+            }
+        }
+        activeRumblePriority = 0;
+        rumbleUntilNanos = 0L;
+    }
+
     private void connectSelectedGamepad() {
         IntBuffer gamepads = SDL_GetGamepads();
         if (gamepads == null) {
@@ -255,7 +326,14 @@ public final class SdlGamepadManager {
                 gamepad = openedGamepad;
                 gamepadInstanceId = instanceId;
                 gamepadName = name;
-                GTNHController.LOG.info("Connected SDL gamepad {} ({})", gamepadName, instanceId);
+                queryCapabilities();
+                rumbleFailureLogged = false;
+                queryRumbleSupport();
+                GTNHController.LOG.info(
+                    "Connected SDL gamepad {} ({}, rumble {})",
+                    gamepadName,
+                    instanceId,
+                    rumbleSupported ? "supported" : "not supported");
                 return;
             }
         } finally {
@@ -300,6 +378,34 @@ public final class SdlGamepadManager {
         }
     }
 
+    private void queryCapabilities() {
+        for (int axis = 0; axis < supportedAxes.length; axis++) {
+            supportedAxes[axis] = SDL_GamepadHasAxis(gamepad, axis);
+        }
+        for (int button = 0; button < supportedButtons.length; button++) {
+            supportedButtons[button] = SDL_GamepadHasButton(gamepad, button);
+        }
+    }
+
+    private void queryRumbleSupport() {
+        try {
+            int properties = SDL_GetGamepadProperties(gamepad);
+            rumbleSupported = properties != 0
+                && SDL_GetBooleanProperty(properties, SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
+        } catch (LinkageError error) {
+            disableUnavailableRumbleApi(error);
+        }
+    }
+
+    private void disableUnavailableRumbleApi(LinkageError error) {
+        rumbleSupported = false;
+        if (!rumbleFailureLogged) {
+            GTNHController.LOG
+                .warn("SDL rumble API is unavailable; controller input will continue without rumble.", error);
+            rumbleFailureLogged = true;
+        }
+    }
+
     private boolean isValidAxis(int axis) {
         return axis >= 0 && axis < axes.length;
     }
@@ -317,19 +423,28 @@ public final class SdlGamepadManager {
     private void disconnect() {
         if (gamepad != NULL) {
             GTNHController.LOG.info("Disconnected SDL gamepad {}", gamepadName);
+            stopRumble();
             SDL_CloseGamepad(gamepad);
         }
         gamepad = NULL;
         gamepadInstanceId = -1;
         gamepadName = "";
+        rumbleSupported = false;
+        rumbleFailureLogged = false;
 
         for (int axis = 0; axis < axes.length; axis++) {
             axes[axis] = 0;
             previousAxes[axis] = 0;
+            supportedAxes[axis] = false;
         }
         for (int button = 0; button < buttons.length; button++) {
             buttons[button] = false;
             previousButtons[button] = false;
+            supportedButtons[button] = false;
         }
+    }
+
+    private static short toUnsignedShort(float value) {
+        return (short) Math.round(value * 65535.0F);
     }
 }

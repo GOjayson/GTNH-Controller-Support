@@ -136,7 +136,7 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
 
         if (searchField.getText()
             .isEmpty() && !searchField.isFocused()) {
-            drawString(fontRendererObj, "Search...", searchField.xPosition + 4, searchField.yPosition + 5, 0x707070);
+            drawString(fontRendererObj, "Search", searchField.xPosition + 4, searchField.yPosition + 5, 0x707070);
         }
 
         int firstBinding = page * rowsPerPage();

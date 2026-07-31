@@ -76,6 +76,7 @@ public final class GuiController {
     private boolean physicalMouseInitialized;
     private boolean cursorInitialized;
     private boolean controllerOwnsCursor;
+    private boolean controllerInputCaptureActive;
 
     public GuiController(SdlGamepadManager gamepadManager, ControllerProfile controllerProfile) {
         this.gamepadManager = gamepadManager;
@@ -175,13 +176,19 @@ public final class GuiController {
         synchronizeScreen(minecraft);
         if (!canControlGui(minecraft)) {
             lastCursorUpdateNanos = System.nanoTime();
+            controllerInputCaptureActive = false;
             clearCursor();
             return;
         }
         if (isControllerInputCaptured()) {
             lastCursorUpdateNanos = System.nanoTime();
+            controllerInputCaptureActive = true;
             hideCursorForCapture();
             return;
+        }
+        if (controllerInputCaptureActive) {
+            controllerInputCaptureActive = false;
+            restoreNativeCursorWithoutControllerOwnership();
         }
         if (onScreenKeyboard.isOpenFor(activeScreen)) {
             lastCursorUpdateNanos = System.nanoTime();

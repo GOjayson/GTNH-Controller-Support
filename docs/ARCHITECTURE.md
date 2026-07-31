@@ -28,6 +28,12 @@ Controller selection stores the SDL gamepad name plus its occurrence among ident
 original first-available behavior. Instance IDs are used only during the running session because SDL can assign new
 ones after reconnection.
 
+`SdlGamepadManager` also owns SDL capability queries and prioritized rumble dispatch. Rumble callers never access the
+native gamepad handle directly, and lower-priority mining pulses cannot cancel an active damage or explosion effect.
+
+`ControllerCalibration` is a Minecraft-independent sample accumulator. The calibration GUI owns timing and user
+confirmation while the model owns drift/range measurement and bounded suggestions.
+
 ## Analog movement
 
 Forge 1.7.10 predates the later `InputUpdateEvent`. A focused Mixin runs after vanilla calculates keyboard movement,
