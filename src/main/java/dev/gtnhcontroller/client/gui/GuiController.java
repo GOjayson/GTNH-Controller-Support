@@ -57,8 +57,6 @@ public final class GuiController {
     private final OnScreenKeyboardOverlay onScreenKeyboard = new OnScreenKeyboardOverlay(inputCompatibility);
     private final Map<ControllerAction, InputRepeatTimer> repeatTimers = new EnumMap<ControllerAction, InputRepeatTimer>(
         ControllerAction.class);
-    private final boolean useLeftStick;
-
     private GuiScreen activeScreen;
     private boolean leftHeld;
     private boolean rightHeld;
@@ -81,10 +79,9 @@ public final class GuiController {
     public GuiController(SdlGamepadManager gamepadManager, ControllerProfile controllerProfile) {
         this.gamepadManager = gamepadManager;
         this.controllerProfile = controllerProfile;
-        useLeftStick = "LEFT".equalsIgnoreCase(Config.cursorStick);
         instance = this;
 
-        if (!useLeftStick && !"RIGHT".equalsIgnoreCase(Config.cursorStick)) {
+        if (!"LEFT".equalsIgnoreCase(Config.cursorStick) && !"RIGHT".equalsIgnoreCase(Config.cursorStick)) {
             GTNHController.LOG.warn("Invalid GUI cursor stick '{}'; using RIGHT.", Config.cursorStick);
         }
     }
@@ -219,6 +216,7 @@ public final class GuiController {
             : Math.min((currentTimeNanos - lastCursorUpdateNanos) / 1_000_000_000.0F, 0.05F);
         lastCursorUpdateNanos = currentTimeNanos;
 
+        boolean useLeftStick = "LEFT".equalsIgnoreCase(Config.cursorStick);
         StickVector cursorInput = InputMath.applyRadialDeadZone(
             gamepadManager.getAxis(useLeftStick ? LEFT_X : RIGHT_X),
             gamepadManager.getAxis(useLeftStick ? LEFT_Y : RIGHT_Y),

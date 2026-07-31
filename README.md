@@ -43,6 +43,9 @@ YouTube video.
 - Primary and hold-modifier binding layers for core, Minecraft and mod actions.
 - Searchable core, Minecraft and mod bindings with exact conflict details.
 - Three eight-direction radial pages for up to 24 frequently used mod actions.
+- Selectable Hold or Toggle radial-menu opening behavior.
+- Editable one-shot chat and command macros assignable to radial slots.
+- In-game controller profile import/export for backups and sharing.
 - Directional GUI navigation, scrolling and a precision-cursor mode.
 - On-screen keyboard for focused vanilla, Creative inventory and NEI text fields.
 - Optional Auto Jump and Hold/Toggle swimming assistance.
@@ -105,7 +108,7 @@ SDL uses physical button positions, so the Xbox labels below map sensibly to oth
 | Right shoulder / D-pad right | Next hotbar slot |
 | North / Xbox Y | Open inventory |
 | Start | Pause menu |
-| Back / Xbox View | Hold radial menu |
+| Back / Xbox View | Open radial menu (Hold mode by default) |
 | Unbound | Hold modifier layer |
 
 ### Menus and inventories
@@ -126,7 +129,14 @@ use the `Layer: Primary/Modifier` button in either binding editor to assign a se
 independently exposed rear paddles can all be used as the modifier.
 
 Additional Minecraft and mod actions can be assigned under `Controller support -> Minecraft & Mod Bindings` or placed
-on any of the three radial pages. Hold LB or RB while the radial menu is open to access the two extra pages.
+on any of the three radial pages. Hold LB or RB while the radial menu is open to access the two extra pages. Radial
+Menu settings also provide Hold and Toggle opening modes plus editable one-shot chat macros such as `/tpa accept` or
+`Hi all`.
+
+Controller profiles are managed under
+`Controller support -> Controller Setup & Test -> Profile Import & Export`. Exported `.cfg` files are stored in
+`config/gtnhcontroller-profiles` and can be copied to another GTNH instance. Review chat macros before sharing a
+profile because their text is included.
 
 ## Accessibility modes
 
@@ -141,7 +151,8 @@ menu opens, focus is lost, gameplay controls are disabled or the controller disc
 
 ## Known limitations
 
-- Multiple saved per-device binding profiles and merged adaptive-controller inputs are not implemented yet.
+- Imported profiles are manual global snapshots; automatic per-device profile switching and merged adaptive-controller
+  inputs are not implemented yet.
 - Calibration recommends one value per physical stick; movement and cursor can still be adjusted separately afterward.
 - Custom text widgets and mod GUIs that bypass Minecraft's normal input APIs may still need dedicated compatibility
   code.

@@ -2,6 +2,28 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.3.1
+
+### Added
+
+- Added in-game controller profile export and import for bindings, tuning, accessibility settings, radial actions,
+  rumble settings and chat macros.
+- Added an automatic `before-import` safety backup whenever a profile is imported.
+- Added selectable Hold and Toggle opening modes for the radial menu.
+- Added editable radial chat macros for sending one user-defined chat message or command per explicit selection.
+
+### Changed
+
+- Profile imports preserve the controller selected on the current computer and reload core and mod bindings
+  immediately.
+- Deleted chat macros are removed from every radial slot that referenced them.
+- The GUI cursor stick is now read dynamically so an imported profile applies without restarting the client.
+
+### Safety
+
+- Chat macros are deliberately limited to one printable, single-line message of at most 100 characters. They do not
+  support loops, delays, multiple commands or automatic triggers.
+
 ## 1.3.0
 
 ### Added

@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 
 import dev.gtnhcontroller.client.input.ControllerProfile;
+import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
 
 public final class GuiControllerDeviceScreen extends GuiScreen implements ControllerConfigurationScreen {
@@ -14,17 +15,20 @@ public final class GuiControllerDeviceScreen extends GuiScreen implements Contro
     private static final int CALIBRATION = 2;
     private static final int TEST_INPUTS = 3;
     private static final int RUMBLE = 4;
+    private static final int PROFILES = 5;
     private static final int DONE = 200;
 
     private final GuiScreen parentScreen;
     private final SdlGamepadManager gamepadManager;
     private final ControllerProfile controllerProfile;
+    private final ModKeyBindingController modKeyBindingController;
 
     public GuiControllerDeviceScreen(GuiScreen parentScreen, SdlGamepadManager gamepadManager,
-        ControllerProfile controllerProfile) {
+        ControllerProfile controllerProfile, ModKeyBindingController modKeyBindingController) {
         this.parentScreen = parentScreen;
         this.gamepadManager = gamepadManager;
         this.controllerProfile = controllerProfile;
+        this.modKeyBindingController = modKeyBindingController;
     }
 
     @Override
@@ -35,6 +39,7 @@ public final class GuiControllerDeviceScreen extends GuiScreen implements Contro
         buttonList.add(new GuiButton(CALIBRATION, centerX - 100, 78, 200, 20, "Calibration Wizard"));
         buttonList.add(new GuiButton(TEST_INPUTS, centerX - 100, 102, 200, 20, "Test Controller Inputs"));
         buttonList.add(new GuiButton(RUMBLE, centerX - 100, 126, 200, 20, "Rumble Feedback"));
+        buttonList.add(new GuiButton(PROFILES, centerX - 100, 150, 200, 20, "Profile Import & Export"));
         buttonList.add(new GuiButton(DONE, centerX - 100, height - 28, 200, 20, "Done"));
     }
 
@@ -52,6 +57,9 @@ public final class GuiControllerDeviceScreen extends GuiScreen implements Contro
                 break;
             case RUMBLE:
                 mc.displayGuiScreen(new GuiControllerRumbleScreen(this, gamepadManager));
+                break;
+            case PROFILES:
+                mc.displayGuiScreen(new GuiControllerProfileScreen(this, controllerProfile, modKeyBindingController));
                 break;
             case DONE:
                 mc.displayGuiScreen(parentScreen);

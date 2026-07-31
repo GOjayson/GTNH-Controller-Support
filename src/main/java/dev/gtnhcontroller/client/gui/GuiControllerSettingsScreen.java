@@ -88,7 +88,8 @@ public final class GuiControllerSettingsScreen extends GuiScreen implements Cont
                 button.displayString = toggleLabel("Auto Jump", Config.autoJump);
                 break;
             case CONTROLLER_SETUP:
-                mc.displayGuiScreen(new GuiControllerDeviceScreen(this, gamepadManager, controllerProfile));
+                mc.displayGuiScreen(
+                    new GuiControllerDeviceScreen(this, gamepadManager, controllerProfile, modKeyBindingController));
                 break;
             case GAMEPLAY_BINDINGS:
                 mc.displayGuiScreen(

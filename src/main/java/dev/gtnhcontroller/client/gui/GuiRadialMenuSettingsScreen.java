@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 
 import dev.gtnhcontroller.Config;
+import dev.gtnhcontroller.client.input.ChatMacro;
 import dev.gtnhcontroller.client.input.ControllerButton;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.RadialMenuConfigCodec;
@@ -20,6 +21,8 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
     private static final int PREVIOUS_PAGE = 300;
     private static final int NEXT_PAGE = 301;
     private static final int DONE = 302;
+    private static final int ACTIVATION_MODE = 303;
+    private static final int CHAT_MACROS = 304;
     private static final int RADIAL_PAGE_BASE = 400;
     private static final int SLOTS_PER_PAGE = 4;
     private static final String[] SLOT_NAMES = { "Up", "Up-right", "Right", "Down-right", "Down", "Down-left", "Left",
@@ -48,11 +51,13 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
         int finalSlot = Math.min(firstSlot + SLOTS_PER_PAGE, RadialMenuConfigCodec.SLOT_COUNT);
         for (int slot = firstSlot; slot < finalSlot; slot++) {
             int row = slot - firstSlot;
-            int buttonY = 72 + row * 27;
+            int buttonY = 90 + row * 24;
             String identifier = Config.getRadialMenuEntry(radialPage, slot);
+            ChatMacro macro = Config.findChatMacro(identifier);
             RegisteredKeyBinding binding = keyBindingController.findRegisteredBinding(identifier);
             String label = identifier.isEmpty() ? "(empty)"
-                : binding == null ? "\u00A7cMissing action" : binding.getDisplayName();
+                : macro != null ? "Chat: " + macro.getName()
+                    : binding == null ? "\u00A7cMissing action" : binding.getDisplayName();
             label = fontRendererObj.trimStringToWidth(label, 164);
 
             buttonList.add(new GuiButton(SLOT_BUTTON_BASE + slot, width / 2 - 35, buttonY, 170, 20, label));
@@ -65,13 +70,22 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
             GuiButton radialPageButton = new GuiButton(
                 RADIAL_PAGE_BASE + candidate.ordinal(),
                 width / 2 - 155 + candidate.ordinal() * 105,
-                44,
+                66,
                 radialPageWidth,
                 20,
                 candidate.displayName);
             radialPageButton.enabled = candidate != radialPage;
             buttonList.add(radialPageButton);
         }
+        buttonList.add(
+            new GuiButton(
+                ACTIVATION_MODE,
+                width / 2 - 155,
+                42,
+                150,
+                20,
+                "Opening: " + Config.radialMenuActivationMode.displayName));
+        buttonList.add(new GuiButton(CHAT_MACROS, width / 2 + 5, 42, 150, 20, "Chat Macros"));
 
         GuiButton previousButton = new GuiButton(PREVIOUS_PAGE, width / 2 - 155, height - 52, 80, 20, "< Previous");
         GuiButton nextButton = new GuiButton(NEXT_PAGE, width / 2 + 75, height - 52, 80, 20, "Next >");
@@ -109,6 +123,12 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
         } else if (button.id == NEXT_PAGE && page < pageCount() - 1) {
             page++;
             initGui();
+        } else if (button.id == ACTIVATION_MODE) {
+            Config.radialMenuActivationMode = Config.radialMenuActivationMode.next();
+            Config.saveControllerSettings();
+            initGui();
+        } else if (button.id == CHAT_MACROS) {
+            mc.displayGuiScreen(new GuiChatMacroListScreen(this));
         } else if (button.id == DONE) {
             mc.displayGuiScreen(parentScreen);
         }
@@ -129,7 +149,7 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
         drawCenteredString(fontRendererObj, "Radial Action Menu", width / 2, 15, 0xFFFFFF);
         drawCenteredString(
             fontRendererObj,
-            "Select which registered action belongs in each direction",
+            "Assign registered actions or one-message chat macros",
             width / 2,
             31,
             0xA0A0A0);
@@ -143,7 +163,7 @@ public final class GuiRadialMenuSettingsScreen extends GuiScreen implements Cont
                 fontRendererObj,
                 label,
                 width / 2 - 45 - fontRendererObj.getStringWidth(label),
-                78 + row * 27,
+                96 + row * 24,
                 0xFFFFFF);
         }
 

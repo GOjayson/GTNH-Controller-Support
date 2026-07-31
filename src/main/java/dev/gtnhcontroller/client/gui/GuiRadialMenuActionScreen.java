@@ -27,6 +27,7 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
     private static final int NEXT_PAGE = 302;
     private static final int CLEAR_SLOT = 303;
     private static final int CANCEL = 304;
+    private static final int CHAT_MACROS = 305;
     private static final int FIRST_ROW_Y = 70;
     private static final int ROW_HEIGHT = 22;
 
@@ -103,6 +104,8 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
             Config.setRadialMenuEntry(radialPage, targetSlot, "");
             Config.saveControllerSettings();
             mc.displayGuiScreen(parentScreen);
+        } else if (button.id == CHAT_MACROS) {
+            mc.displayGuiScreen(new GuiChatMacroListScreen(parentScreen, radialPage, targetSlot));
         } else if (button.id == CANCEL) {
             mc.displayGuiScreen(parentScreen);
         }
@@ -252,11 +255,12 @@ public final class GuiRadialMenuActionScreen extends GuiScreen implements Contro
             buttonList.add(nextButton);
         }
 
-        GuiButton clearButton = new GuiButton(CLEAR_SLOT, width / 2 - 155, height - 28, 150, 20, "Clear Slot");
+        GuiButton clearButton = new GuiButton(CLEAR_SLOT, width / 2 - 155, height - 28, 95, 20, "Clear Slot");
         clearButton.enabled = !Config.getRadialMenuEntry(radialPage, targetSlot)
             .isEmpty();
         buttonList.add(clearButton);
-        buttonList.add(new GuiButton(CANCEL, width / 2 + 5, height - 28, 150, 20, "Cancel"));
+        buttonList.add(new GuiButton(CHAT_MACROS, width / 2 - 55, height - 28, 110, 20, "Chat Macros"));
+        buttonList.add(new GuiButton(CANCEL, width / 2 + 60, height - 28, 95, 20, "Cancel"));
     }
 
     private RegisteredKeyBinding visibleBinding(int row) {

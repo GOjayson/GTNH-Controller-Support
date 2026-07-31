@@ -1,18 +1,24 @@
 package dev.gtnhcontroller;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.minecraftforge.common.config.Configuration;
 
 import dev.gtnhcontroller.client.input.ActivationMode;
+import dev.gtnhcontroller.client.input.ChatMacro;
+import dev.gtnhcontroller.client.input.ChatMacroConfigCodec;
 import dev.gtnhcontroller.client.input.ControllerAction;
 import dev.gtnhcontroller.client.input.ControllerBindingLayer;
 import dev.gtnhcontroller.client.input.ControllerSelection;
 import dev.gtnhcontroller.client.input.ModKeyBindingConfigCodec;
 import dev.gtnhcontroller.client.input.ModKeyBindingIdentifier;
+import dev.gtnhcontroller.client.input.RadialMenuActivationMode;
 import dev.gtnhcontroller.client.input.RadialMenuConfigCodec;
 import dev.gtnhcontroller.client.input.RadialMenuPage;
 
@@ -63,6 +69,7 @@ public final class Config {
     public static boolean rumbleExplosions = true;
     public static boolean rumbleMining = true;
     public static float rumbleIntensity = 1.0F;
+    public static RadialMenuActivationMode radialMenuActivationMode = RadialMenuActivationMode.HOLD;
 
     public static String jumpBinding = "BUTTON:SOUTH";
     public static String sneakBinding = "BUTTON:EAST";
@@ -94,6 +101,7 @@ public final class Config {
         ControllerAction.class);
     private static final Map<RadialMenuPage, String[]> radialMenuEntries = new EnumMap<RadialMenuPage, String[]>(
         RadialMenuPage.class);
+    private static final Map<String, ChatMacro> chatMacros = new LinkedHashMap<String, ChatMacro>();
     private static File configFile;
 
     static {
@@ -342,6 +350,19 @@ public final class Config {
             0.0F,
             1.0F,
             "Global multiplier applied to all controller rumble effects.");
+        String configuredRadialMode = configuration.getString(
+            "activationMode",
+            "radialMenu",
+            radialMenuActivationMode.name(),
+            "HOLD activates when the radial input is released. TOGGLE stays open until Confirm or Back is pressed.");
+        radialMenuActivationMode = RadialMenuActivationMode.parse(configuredRadialMode, RadialMenuActivationMode.HOLD);
+        if (!radialMenuActivationMode.name()
+            .equalsIgnoreCase(configuredRadialMode.trim())) {
+            GTNHController.LOG
+                .warn("Invalid radial menu activation mode '{}'; falling back to HOLD.", configuredRadialMode);
+            configuration.get("radialMenu", "activationMode", RadialMenuActivationMode.HOLD.name())
+                .set(RadialMenuActivationMode.HOLD.name());
+        }
 
         jumpBinding = getBinding(configuration, "jump", jumpBinding, "Jump while playing.");
         sneakBinding = getBinding(configuration, "sneak", sneakBinding, "Sneak while playing.");
@@ -365,7 +386,7 @@ public final class Config {
             configuration,
             "radialMenu",
             radialMenuBinding,
-            "Hold to open the radial action menu, aim with the right stick, and release to activate.");
+            "Open the radial action menu. Its HOLD or TOGGLE behavior is configured under radialMenu.activationMode.");
         modifierLayerBinding = getBinding(
             configuration,
             "modifierLayer",
@@ -452,6 +473,14 @@ public final class Config {
             }
         }
         migrateDropBinding(configuration);
+        chatMacros.clear();
+        chatMacros.putAll(
+            ChatMacroConfigCodec.decode(
+                configuration.getStringList(
+                    "entries",
+                    "chatMacros",
+                    new String[0],
+                    "User-created single-message chat or command macros available to the radial menu.")));
         radialMenuEntries.clear();
         for (RadialMenuPage page : RadialMenuPage.values()) {
             radialMenuEntries.put(
@@ -644,6 +673,44 @@ public final class Config {
         radialMenuEntries.get(page)[slot] = identifier == null ? "" : identifier;
     }
 
+    public static List<ChatMacro> getChatMacros() {
+        return Collections.unmodifiableList(new ArrayList<ChatMacro>(chatMacros.values()));
+    }
+
+    public static ChatMacro getChatMacro(String id) {
+        return id == null ? null : chatMacros.get(id);
+    }
+
+    public static ChatMacro findChatMacro(String radialIdentifier) {
+        return getChatMacro(ChatMacro.idFromRadialIdentifier(radialIdentifier));
+    }
+
+    public static void putChatMacro(ChatMacro macro) {
+        if (macro == null) {
+            throw new IllegalArgumentException("Chat macro cannot be null");
+        }
+        chatMacros.put(macro.getId(), macro);
+    }
+
+    public static void removeChatMacro(String id) {
+        ChatMacro removed = chatMacros.remove(id);
+        if (removed == null) {
+            return;
+        }
+        String identifier = removed.getRadialIdentifier();
+        for (String[] entries : radialMenuEntries.values()) {
+            for (int slot = 0; slot < entries.length; slot++) {
+                if (identifier.equals(entries[slot])) {
+                    entries[slot] = "";
+                }
+            }
+        }
+    }
+
+    public static File getConfigFile() {
+        return configFile;
+    }
+
     public static String getBinding(ControllerAction action, ControllerBindingLayer layer) {
         if (layer == ControllerBindingLayer.PRIMARY || action.guiAction || action == ControllerAction.MODIFIER_LAYER) {
             return getBinding(action);
@@ -739,6 +806,8 @@ public final class Config {
             .set(rumbleMining);
         configuration.get("rumble", "intensity", rumbleIntensity)
             .set(rumbleIntensity);
+        configuration.get("radialMenu", "activationMode", radialMenuActivationMode.name())
+            .set(radialMenuActivationMode.name());
         for (ControllerAction action : ControllerAction.values()) {
             String binding = getBinding(action);
             configuration.get("bindings", action.configKey, binding)
@@ -753,6 +822,8 @@ public final class Config {
             .set(ModKeyBindingConfigCodec.encode(modKeyBindings));
         configuration.get("modifierModBindings", "entries", new String[0])
             .set(ModKeyBindingConfigCodec.encode(modifierModKeyBindings));
+        configuration.get("chatMacros", "entries", new String[0])
+            .set(ChatMacroConfigCodec.encode(chatMacros));
         for (RadialMenuPage page : RadialMenuPage.values()) {
             configuration.get("radialMenu", page.configKey, new String[0])
                 .set(RadialMenuConfigCodec.encode(radialMenuEntries.get(page)));

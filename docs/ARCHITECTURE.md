@@ -15,7 +15,8 @@ Gameplay and GUI control are intentionally separate:
 
 - `GameplayController` handles movement, camera, core actions and safe release.
 - `GuiController` owns the virtual cursor, clicks, navigation, scrolling and the keyboard overlay.
-- `RadialMenuController` dispatches one registered action after radial selection.
+- `RadialMenuController` dispatches one registered action or one explicitly selected single-line chat macro after
+  radial selection. Hold and Toggle opening modes share the same action resolver.
 - `ModKeyBindingController` maps SDL inputs to exact registered `KeyBinding` objects.
 
 Separating contexts prevents a button such as Xbox B from triggering Sneak and GUI Back simultaneously.
@@ -33,6 +34,10 @@ native gamepad handle directly, and lower-priority mining pulses cannot cancel a
 
 `ControllerCalibration` is a Minecraft-independent sample accumulator. The calibration GUI owns timing and user
 confirmation while the model owns drift/range measurement and bounded suggestions.
+
+`ControllerProfileStore` copies complete Forge configuration snapshots to and from a dedicated profile directory,
+creating a timestamped safety backup before each import. The in-game import path preserves the machine-local
+controller selection, then reloads binding registries.
 
 ## Analog movement
 

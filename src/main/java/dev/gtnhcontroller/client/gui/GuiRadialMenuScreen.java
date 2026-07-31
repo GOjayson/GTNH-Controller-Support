@@ -1,6 +1,7 @@
 package dev.gtnhcontroller.client.gui;
 
 import static dev.gtnhcontroller.client.input.ControllerAction.GUI_BACK;
+import static dev.gtnhcontroller.client.input.ControllerAction.GUI_CONFIRM;
 import static dev.gtnhcontroller.client.input.ControllerAction.RADIAL_MENU;
 import static dev.gtnhcontroller.client.input.ControllerAxis.RIGHT_X;
 import static dev.gtnhcontroller.client.input.ControllerAxis.RIGHT_Y;
@@ -17,8 +18,10 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import dev.gtnhcontroller.Config;
+import dev.gtnhcontroller.client.input.ChatMacro;
 import dev.gtnhcontroller.client.input.ControllerProfile;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
+import dev.gtnhcontroller.client.input.RadialMenuActivationMode;
 import dev.gtnhcontroller.client.input.RadialMenuConfigCodec;
 import dev.gtnhcontroller.client.input.RadialMenuPage;
 import dev.gtnhcontroller.client.input.RegisteredKeyBinding;
@@ -37,12 +40,15 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
     private final SdlGamepadManager gamepadManager;
     private final ControllerProfile controllerProfile;
     private final ModKeyBindingController keyBindingController;
-    private final RegisteredKeyBinding[] entries = new RegisteredKeyBinding[RadialMenuConfigCodec.SLOT_COUNT];
+    private final RegisteredKeyBinding[] bindingEntries = new RegisteredKeyBinding[RadialMenuConfigCodec.SLOT_COUNT];
+    private final ChatMacro[] macroEntries = new ChatMacro[RadialMenuConfigCodec.SLOT_COUNT];
+    private final String[] entryLabels = new String[RadialMenuConfigCodec.SLOT_COUNT];
 
     private int selectedSlot = -1;
     private int latchedDPadSlot = -1;
     private RadialMenuPage radialPage = RadialMenuPage.BASE;
     private boolean finished;
+    private boolean radialInputReleased;
 
     public GuiRadialMenuScreen(SdlGamepadManager gamepadManager, ControllerProfile controllerProfile,
         ModKeyBindingController keyBindingController) {
@@ -80,8 +86,21 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
             finish(false);
             return;
         }
-        if (!controllerProfile.isDown(RADIAL_MENU)) {
+        if (Config.radialMenuActivationMode == RadialMenuActivationMode.HOLD
+            && !controllerProfile.isDown(RADIAL_MENU)) {
             finish(true);
+            return;
+        }
+        if (Config.radialMenuActivationMode == RadialMenuActivationMode.TOGGLE) {
+            if (!radialInputReleased) {
+                radialInputReleased = !controllerProfile.isDown(RADIAL_MENU);
+            } else if (controllerProfile.wasPressed(RADIAL_MENU)) {
+                finish(false);
+                return;
+            }
+            if (controllerProfile.wasPressed(GUI_CONFIRM)) {
+                finish(true);
+            }
         }
     }
 
@@ -98,20 +117,24 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
         int centerX = width / 2;
         int centerY = height / 2;
 
-        for (int slot = 0; slot < entries.length; slot++) {
+        for (int slot = 0; slot < entryLabels.length; slot++) {
             drawSector(centerX, centerY, slot, slot == selectedSlot);
         }
-        for (int slot = 0; slot < entries.length; slot++) {
+        for (int slot = 0; slot < entryLabels.length; slot++) {
             drawEntryLabel(centerX, centerY, slot);
         }
 
         String centerLabel = selectedSlot < 0 ? "Aim with stick or D-pad"
-            : entries[selectedSlot] == null ? "Slot is empty" : "Release to activate";
+            : entryLabels[selectedSlot] == null ? "Slot is empty"
+                : Config.radialMenuActivationMode == RadialMenuActivationMode.HOLD ? "Release to activate"
+                    : "Press Confirm to activate";
         drawCenteredString(fontRendererObj, centerLabel, centerX, centerY - 4, 0xFFFFFF);
         drawCenteredString(fontRendererObj, "Page: " + radialPage.displayName, centerX, 16, 0xFFFFFF);
         drawCenteredString(
             fontRendererObj,
-            "Hold LB/RB for extra pages; D-pad latches; B cancels",
+            Config.radialMenuActivationMode == RadialMenuActivationMode.HOLD
+                ? "Hold LB/RB for extra pages; D-pad latches; Back cancels"
+                : "Hold LB/RB for extra pages; Confirm selects; Back cancels",
             centerX,
             height - 18,
             0xA0A0A0);
@@ -128,11 +151,11 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
     }
 
     private void drawSector(int centerX, int centerY, int slot, boolean selected) {
-        double sectorSize = Math.PI * 2.0D / entries.length;
+        double sectorSize = Math.PI * 2.0D / entryLabels.length;
         double centerAngle = -Math.PI / 2.0D + slot * sectorSize;
         double startAngle = centerAngle - sectorSize / 2.0D + 0.02D;
         double endAngle = centerAngle + sectorSize / 2.0D - 0.02D;
-        int color = selected ? 0xFF3E9EA8 : entries[slot] == null ? 0xFF252525 : 0xFF4A4A4A;
+        int color = selected ? 0xFF3E9EA8 : entryLabels[slot] == null ? 0xFF252525 : 0xFF4A4A4A;
 
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
@@ -151,7 +174,7 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
     }
 
     private void drawEntryLabel(int centerX, int centerY, int slot) {
-        double angle = -Math.PI / 2.0D + slot * Math.PI * 2.0D / entries.length;
+        double angle = -Math.PI / 2.0D + slot * Math.PI * 2.0D / entryLabels.length;
         int labelCenterX = centerX + (int) Math.round(Math.cos(angle) * LABEL_RADIUS);
         int labelCenterY = centerY + (int) Math.round(Math.sin(angle) * LABEL_RADIUS);
         int left = labelCenterX - LABEL_WIDTH / 2;
@@ -159,9 +182,9 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
         int background = slot == selectedSlot ? 0xE03E9EA8 : 0xD0202020;
         drawRect(left, top, left + LABEL_WIDTH, top + LABEL_HEIGHT, background);
 
-        String label = entries[slot] == null ? "(empty)" : entries[slot].getDisplayName();
+        String label = entryLabels[slot] == null ? "(empty)" : entryLabels[slot];
         label = fontRendererObj.trimStringToWidth(label, LABEL_WIDTH - 6);
-        int color = entries[slot] == null ? 0x808080 : 0xFFFFFF;
+        int color = entryLabels[slot] == null ? 0x808080 : 0xFFFFFF;
         drawCenteredString(fontRendererObj, label, labelCenterX, labelCenterY - 4, color);
     }
 
@@ -178,13 +201,28 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
             mc.setIngameFocus();
         }
         if (!identifier.isEmpty()) {
-            keyBindingController.pulseBinding(identifier);
+            ChatMacro macro = Config.findChatMacro(identifier);
+            if (macro != null && mc.thePlayer != null) {
+                mc.thePlayer.sendChatMessage(macro.getMessage());
+            } else {
+                keyBindingController.pulseBinding(identifier);
+            }
         }
     }
 
     private void loadEntries() {
-        for (int slot = 0; slot < entries.length; slot++) {
-            entries[slot] = keyBindingController.findRegisteredBinding(Config.getRadialMenuEntry(radialPage, slot));
+        for (int slot = 0; slot < entryLabels.length; slot++) {
+            String identifier = Config.getRadialMenuEntry(radialPage, slot);
+            macroEntries[slot] = Config.findChatMacro(identifier);
+            bindingEntries[slot] = macroEntries[slot] == null ? keyBindingController.findRegisteredBinding(identifier)
+                : null;
+            if (macroEntries[slot] != null) {
+                entryLabels[slot] = "Chat: " + macroEntries[slot].getName();
+            } else if (bindingEntries[slot] != null) {
+                entryLabels[slot] = bindingEntries[slot].getDisplayName();
+            } else {
+                entryLabels[slot] = null;
+            }
         }
     }
 

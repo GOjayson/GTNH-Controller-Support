@@ -8,7 +8,8 @@ The full configuration file is `config\gtnhcontroller.cfg`. Start the game once 
 
 The main screen contains:
 
-- **Controller Setup & Test:** opens controller selection, calibration, live input testing and rumble configuration.
+- **Controller Setup & Test:** opens controller selection, calibration, live input testing, rumble configuration and
+  profile import/export.
 - **Gameplay Controls:** enables or disables in-world controller input.
 - **GUI Controls:** enables or disables controller input in menus.
 - **Auto Jump:** automatically jumps over a one-block rise when there is enough clearance.
@@ -20,7 +21,22 @@ The main screen contains:
 - **Axis Inversion:** independently inverts camera X/Y and GUI cursor X/Y.
 - **Navigation:** edits directional target types, repeat timing and precision-cursor speed.
 - **Minecraft & Mod Bindings:** maps controller inputs to registered Minecraft and mod keybindings.
-- **Radial Menu:** assigns up to 24 registered actions across Base, Hold LB and Hold RB pages.
+- **Radial Menu:** assigns up to 24 registered actions or chat macros across Base, Hold LB and Hold RB pages and
+  selects Hold or Toggle opening behavior.
+
+## Controller profiles
+
+Open `Controller Setup & Test -> Profile Import & Export`. Enter a name and choose `Export Current` to create a
+shareable `.cfg` snapshot in `config/gtnhcontroller-profiles`. Copy another exported `.cfg` file into that folder,
+reopen the screen and select it to import.
+
+Profiles include controller bindings, sensitivities, deadzones, axis inversion, accessibility modes, navigation,
+rumble, radial slots and chat macros. The physical controller selected on the current computer is deliberately
+preserved during import. Core and Minecraft/mod bindings reload immediately.
+
+Every import first creates a timestamped `before-import-*.cfg` safety backup in the same directory. Existing named
+exports are never silently overwritten. Because macro message text is included, review macros before sharing a
+profile publicly.
 
 ## Calibration and input testing
 
@@ -90,12 +106,22 @@ Mods that read raw LWJGL keyboard state instead of registered keybindings may re
 
 ## Radial menu
 
-Hold the configured Radial Action Menu input, aim with the right stick or D-pad and release to activate the selected
-action once. Hold Left Shoulder or Right Shoulder for the corresponding extra page; release the shoulder to return to
-Base. If both shoulders are held, Base is used. Return the stick to the center or press Back to cancel.
+The radial settings screen offers two opening modes:
+
+- `HOLD`: hold the configured Radial Action Menu input, aim with the right stick or D-pad and release to activate.
+- `TOGGLE`: press once to open, choose an action, then press GUI Confirm. GUI Back or a second radial-menu press closes
+  the menu without activating anything.
+
+Hold Left Shoulder or Right Shoulder for the corresponding extra page; release the shoulder to return to Base. If
+both shoulders are held, Base is used. Return the stick to the center or press Back to cancel in Hold mode.
 
 Slots are empty by default. Missing actions from removed mods are displayed as missing and never silently replaced
 with a similarly named action.
+
+`Chat Macros` creates, edits and deletes named messages or commands. Choose `Chat Macros` while assigning a radial
+slot to place one there. Selecting that slot sends its single configured line exactly once. Macro messages are
+limited to 100 characters and cannot contain line breaks; there are no automatic triggers, delays, loops or
+multi-command scripting.
 
 ## Manual configuration reference
 
@@ -159,6 +185,12 @@ with a similarly named action.
 - `explosions`: nearby explosion feedback.
 - `mining`: periodic block-mining feedback.
 - `intensity`: global effect multiplier from `0.0` to `1.0`.
+
+### Radial menu and chat macros
+
+- `activationMode`: `HOLD` or `TOGGLE`.
+- `entries`, `leftShoulderEntries` and `rightShoulderEntries`: encoded radial assignments.
+- `chatMacros.entries`: encoded macro names and their single chat message or command.
 
 ## Binding syntax
 

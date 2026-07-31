@@ -131,13 +131,34 @@ GUI Confirm can drag the map and both shoulder actions zoom it.
 ## Radial menu
 
 - Assign different registered actions to Base, Hold LB and Hold RB.
-- Hold the radial-menu input, select with the right stick and release.
+- In Hold mode, hold the radial-menu input, select with the right stick and release.
+- In Toggle mode, press once to open, release the radial input, select an action and press GUI Confirm.
+- In Toggle mode, verify GUI Back and a second radial-input press close without activating the selection.
 - While it is open, hold each shoulder and verify the page label and all eight assignments change.
 - Hold both shoulders and verify the Base page is selected.
 - Repeat with the D-pad.
 - Return the stick to center before release and verify cancellation.
 - Assign Screenshot and verify that exactly one screenshot is created.
 - Remove a mod that owns an assigned action and verify that the slot becomes missing without activating another action.
+
+## Chat macros
+
+- Create one plain chat macro and one slash-command macro using the on-screen keyboard.
+- Edit both the displayed name and message, then assign them to different radial slots.
+- Activate each slot once and confirm exactly one message or command is sent.
+- Confirm Hold and Toggle radial modes do not send a macro while cancelling.
+- Delete an assigned macro and verify every slot that used it becomes empty.
+- Verify blank, multi-line and over-100-character messages are rejected.
+
+## Profile import and export
+
+- Export the current settings with a unique name and verify the `.cfg` appears in
+  `config/gtnhcontroller-profiles`.
+- Change bindings, sensitivity, accessibility, rumble, radial and macro settings, then import the profile.
+- Verify those settings restore immediately while the currently selected physical controller remains selected.
+- Verify a timestamped `before-import-*.cfg` safety backup was created.
+- Try exporting the same name twice and verify the first file is not overwritten.
+- Copy a profile from another instance into the profile directory and verify it appears after reopening the screen.
 
 ## On-screen keyboard
 
