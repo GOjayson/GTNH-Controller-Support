@@ -2,6 +2,21 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.3.2
+
+### Added
+
+- Added optional discovery of the separate NEI key-binding list, including bindings registered by NEI plugins.
+- Added NEI actions to the existing searchable Minecraft & Mod Bindings and radial-action lists.
+
+### Compatibility
+
+- Supports legacy GTNH NEI builds that store `OptionKeyBind` and `KeyState` objects outside Minecraft's key-binding
+  array, as well as newer NEI builds backed by vanilla `KeyBinding` objects.
+- Sends controller state through NEI's normal GUI input handlers so inventory actions can respond without a physical
+  keyboard event.
+- Keeps NEI optional: the adapter and input hooks do nothing when NEI is not installed.
+
 ## 1.3.1
 
 ### Added

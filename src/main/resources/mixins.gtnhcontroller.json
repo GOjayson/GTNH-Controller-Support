@@ -15,7 +15,9 @@
     "KeyBindingControllerAccessor",
     "MixinEntityRendererVirtualCursor",
     "MixinGuiScreenControllerKeyDispatch",
-    "MixinMovementInputFromOptions"
+    "MixinMovementInputFromOptions",
+    "MixinNeiClientConfigControllerKeys",
+    "MixinNeiKeyManagerControllerKeys"
   ],
   "server": []
 }

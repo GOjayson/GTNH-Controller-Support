@@ -34,6 +34,9 @@ Profiles include controller bindings, sensitivities, deadzones, axis inversion, 
 rumble, radial slots and chat macros. The physical controller selected on the current computer is deliberately
 preserved during import. Core and Minecraft/mod bindings reload immediately.
 
+NEI actions use stable `NEI`-scoped identifiers. Known legacy action names are normalized to their newer names, so a
+profile keeps its NEI assignments when moving between supported old and new NEI registry formats.
+
 Every import first creates a timestamped `before-import-*.cfg` safety backup in the same directory. Existing named
 exports are never silently overwritten. Because macro message text is included, review macros before sharing a
 profile publicly.

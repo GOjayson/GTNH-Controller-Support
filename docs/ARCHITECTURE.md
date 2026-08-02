@@ -17,7 +17,7 @@ Gameplay and GUI control are intentionally separate:
 - `GuiController` owns the virtual cursor, clicks, navigation, scrolling and the keyboard overlay.
 - `RadialMenuController` dispatches one registered action or one explicitly selected single-line chat macro after
   radial selection. Hold and Toggle opening modes share the same action resolver.
-- `ModKeyBindingController` maps SDL inputs to exact registered `KeyBinding` objects.
+- `ModKeyBindingController` maps SDL inputs to exact registered `KeyBinding` objects and optional external registries.
 
 Separating contexts prevents a button such as Xbox B from triggering Sneak and GUI Back simultaneously.
 
@@ -68,10 +68,16 @@ compatibility paths for:
 - Galacticraft celestial-map cursor rendering and zooming;
 - focused vanilla, Creative and NEI text fields;
 - exact registered keybinding dispatch;
+- NEI's separate legacy option/key-state registry and its newer `KeyBinding` registry;
 - vanilla Screenshot and Fullscreen actions.
 
 Unknown custom GUIs continue to receive the normal virtual cursor. Extra adapters are added only when a screen bypasses
 the vanilla input paths. Optional-mod adapters use class names and reflection so those mods are not hard dependencies.
+
+NEI requires both discovery and dispatch compatibility. Older GTNH builds expose `OptionKeyBind` entries and poll
+their own `KeyState` objects, while newer builds retain an internal map of vanilla `KeyBinding` objects. GUI actions
+in both generations can poll raw keyboard state, so optional pseudo-Mixins expose only the currently held controller
+action to NEI's existing handlers. No NEI classes are linked at compile time.
 
 ## Safety principles
 

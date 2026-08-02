@@ -42,6 +42,7 @@ YouTube video.
 - Rebindable gameplay and GUI actions, including SDL-exposed triggers, paddles and miscellaneous buttons.
 - Primary and hold-modifier binding layers for core, Minecraft and mod actions.
 - Searchable core, Minecraft and mod bindings with exact conflict details.
+- Separate NEI key bindings appear alongside Minecraft and mod actions, including legacy GTNH NEI builds.
 - Three eight-direction radial pages for up to 24 frequently used mod actions.
 - Selectable Hold or Toggle radial-menu opening behavior.
 - Editable one-shot chat and command macros assignable to radial slots.

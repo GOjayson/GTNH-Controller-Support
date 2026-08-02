@@ -14,9 +14,15 @@ public final class RegisteredKeyBinding {
     private final String categoryName;
     private final String displayName;
     private final int occurrence;
+    private final NeiKeyBinding neiBinding;
 
     RegisteredKeyBinding(KeyBinding keyBinding, String identifier, String categoryKey, String descriptionKey,
         String categoryName, String displayName, int occurrence) {
+        this(keyBinding, identifier, categoryKey, descriptionKey, categoryName, displayName, occurrence, null);
+    }
+
+    RegisteredKeyBinding(KeyBinding keyBinding, String identifier, String categoryKey, String descriptionKey,
+        String categoryName, String displayName, int occurrence, NeiKeyBinding neiBinding) {
         this.keyBinding = keyBinding;
         this.identifier = identifier;
         this.categoryKey = categoryKey;
@@ -24,10 +30,15 @@ public final class RegisteredKeyBinding {
         this.categoryName = categoryName;
         this.displayName = displayName;
         this.occurrence = occurrence;
+        this.neiBinding = neiBinding;
     }
 
     KeyBinding getKeyBinding() {
         return keyBinding;
+    }
+
+    NeiKeyBinding getNeiBinding() {
+        return neiBinding;
     }
 
     public String getIdentifier() {

@@ -114,6 +114,10 @@ GUI Confirm can drag the map and both shoulder actions zoom it.
 - Restart the game and verify persistence.
 - Assign a rear paddle if SDL exposes one independently.
 - Search for a GTNH mod action and bind it.
+- Search for `NEI` and verify its separate Inventory and World key-binding categories are present.
+- Bind an NEI world action such as Chunk Boundary Overlay and verify it activates during gameplay.
+- In an inventory, bind and test Focus Search Bar, Recipe and Usage while hovering appropriate NEI elements.
+- Restart with NEI temporarily removed and verify the controller mod still starts without compatibility errors.
 - Assign one input to two gameplay actions and verify conflict markers.
 - Hover every red conflict marker and verify all conflicting core and mod actions are named.
 - Search the Gameplay and GUI binding pages by partial action name and verify binding still works after filtering.

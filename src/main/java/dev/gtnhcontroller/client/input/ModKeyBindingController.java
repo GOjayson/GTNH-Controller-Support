@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
@@ -38,8 +39,10 @@ public final class ModKeyBindingController {
     private final Map<String, BindingState> states = new LinkedHashMap<String, BindingState>();
     private final Set<KeyBinding> pendingPulseReleases = Collections
         .newSetFromMap(new IdentityHashMap<KeyBinding, Boolean>());
+    private final NeiKeyBindingAdapter neiKeyBindingAdapter = new NeiKeyBindingAdapter();
 
     private KeyBinding[] observedKeyBindings = new KeyBinding[0];
+    private List<NeiKeyBinding> observedNeiBindings = Collections.emptyList();
 
     public ModKeyBindingController(SdlGamepadManager gamepadManager, ControllerProfile controllerProfile) {
         this.gamepadManager = gamepadManager;
@@ -53,27 +56,26 @@ public final class ModKeyBindingController {
         }
 
         refreshIfRegistryChanged();
-        boolean controllerStateChanged = releasePulsedBindings();
+        boolean controllerStateChanged = releasePulsedBindings() | neiKeyBindingAdapter.releasePulses();
         Minecraft minecraft = Minecraft.getMinecraft();
-        if (!canControlGameplay(minecraft)) {
-            controllerStateChanged |= releaseControlledBindings();
-            if (controllerStateChanged) {
-                FMLCommonHandler.instance()
-                    .fireKeyInput();
-            }
-            return;
-        }
+        boolean gameplayControl = canControlGameplay(minecraft);
+        boolean neiGuiControl = canControlNeiGui(minecraft);
+        boolean dispatchNeiGuiInput = false;
 
         for (BindingState state : states.values()) {
+            boolean canControlState = gameplayControl || neiGuiControl && state.entry.getNeiBinding() != null;
             ControllerBinding controllerBinding = state.getBinding(controllerProfile.isModifierActive());
-            boolean controllerDown = !controllerBinding.isEmpty()
+            boolean controllerDown = canControlState && !controllerBinding.isEmpty()
                 && controllerBinding.isDown(gamepadManager, Config.triggerThreshold);
             controllerStateChanged |= state.controllerDown != controllerDown;
             if (controllerDown && !state.controllerDown) {
                 dispatchEventDrivenVanillaBinding(minecraft, state.entry);
             }
-            updateExactBinding(state.entry.getKeyBinding(), state.controllerDown, controllerDown);
+            dispatchNeiGuiInput |= updateBindingState(state.entry, state.controllerDown, controllerDown, minecraft);
             state.controllerDown = controllerDown;
+        }
+        if (dispatchNeiGuiInput) {
+            neiKeyBindingAdapter.dispatchCurrentContainer(minecraft);
         }
         if (controllerStateChanged) {
             FMLCommonHandler.instance()
@@ -106,10 +108,15 @@ public final class ModKeyBindingController {
         Minecraft minecraft = Minecraft.getMinecraft();
         dispatchEventDrivenVanillaBinding(minecraft, state.entry);
         KeyBinding binding = state.entry.getKeyBinding();
-        KeyBindingControllerAccessor accessor = (KeyBindingControllerAccessor) (Object) binding;
-        accessor.gtnhcontroller$setPressTime(accessor.gtnhcontroller$getPressTime() + 1);
-        accessor.gtnhcontroller$setPressed(true);
-        pendingPulseReleases.add(binding);
+        if (binding != null) {
+            KeyBindingControllerAccessor accessor = (KeyBindingControllerAccessor) (Object) binding;
+            accessor.gtnhcontroller$setPressTime(accessor.gtnhcontroller$getPressTime() + 1);
+            accessor.gtnhcontroller$setPressed(true);
+            pendingPulseReleases.add(binding);
+        }
+        if (state.entry.getNeiBinding() != null) {
+            neiKeyBindingAdapter.pulse(state.entry.getNeiBinding(), minecraft);
+        }
         FMLCommonHandler.instance()
             .fireKeyInput();
         return true;
@@ -118,6 +125,9 @@ public final class ModKeyBindingController {
     private static void dispatchEventDrivenVanillaBinding(Minecraft minecraft, RegisteredKeyBinding entry) {
         GameSettings settings = minecraft.gameSettings;
         KeyBinding binding = entry.getKeyBinding();
+        if (binding == null) {
+            return;
+        }
         if (binding == settings.keyBindScreenshot) {
             minecraft.ingameGUI.getChatGUI()
                 .printChatMessage(
@@ -143,7 +153,7 @@ public final class ModKeyBindingController {
         BindingState state = states.get(identifier);
         if (state != null) {
             if (state.controllerDown) {
-                updateExactBinding(state.entry.getKeyBinding(), true, false);
+                updateBindingState(state.entry, true, false, Minecraft.getMinecraft());
             }
             state.setBinding(layer, parsedBinding);
             state.controllerDown = false;
@@ -216,12 +226,18 @@ public final class ModKeyBindingController {
         }
 
         KeyBinding[] currentBindings = minecraft.gameSettings.keyBindings;
-        if (!sameRegistry(currentBindings, observedKeyBindings)) {
-            rebuildRegistry(minecraft);
+        List<NeiKeyBinding> currentNeiBindings = neiKeyBindingAdapter.discoverBindings();
+        if (!sameRegistry(currentBindings, observedKeyBindings)
+            || !sameNeiRegistry(currentNeiBindings, observedNeiBindings)) {
+            rebuildRegistry(minecraft, currentNeiBindings);
         }
     }
 
     private void rebuildRegistry(Minecraft minecraft) {
+        rebuildRegistry(minecraft, neiKeyBindingAdapter.discoverBindings());
+    }
+
+    private void rebuildRegistry(Minecraft minecraft, List<NeiKeyBinding> currentNeiBindings) {
         if (minecraft.gameSettings == null) {
             return;
         }
@@ -232,12 +248,25 @@ public final class ModKeyBindingController {
 
         KeyBinding[] currentBindings = minecraft.gameSettings.keyBindings;
         observedKeyBindings = currentBindings.clone();
+        observedNeiBindings = new ArrayList<NeiKeyBinding>(currentNeiBindings);
         Set<KeyBinding> excludedBindings = builtInControllerBindings(minecraft.gameSettings);
         Set<KeyBinding> seenBindings = Collections.newSetFromMap(new IdentityHashMap<KeyBinding, Boolean>());
+        Map<KeyBinding, NeiKeyBinding> neiBindingsByObject = new IdentityHashMap<KeyBinding, NeiKeyBinding>();
+        for (NeiKeyBinding neiBinding : currentNeiBindings) {
+            if (neiBinding.keyBinding != null) {
+                neiBindingsByObject.put(neiBinding.keyBinding, neiBinding);
+            }
+        }
         Map<String, Integer> occurrences = new HashMap<String, Integer>();
 
         for (KeyBinding keyBinding : currentBindings) {
             if (keyBinding == null || excludedBindings.contains(keyBinding) || !seenBindings.add(keyBinding)) {
+                continue;
+            }
+
+            NeiKeyBinding neiBinding = neiBindingsByObject.get(keyBinding);
+            if (neiBinding != null) {
+                addNeiBinding(neiBinding);
                 continue;
             }
 
@@ -266,6 +295,12 @@ public final class ModKeyBindingController {
             registeredBindings.add(entry);
             states.put(identifier, new BindingState(entry, primaryBinding, modifierBinding));
         }
+
+        for (NeiKeyBinding neiBinding : currentNeiBindings) {
+            if (neiBinding.keyBinding == null || seenBindings.add(neiBinding.keyBinding)) {
+                addNeiBinding(neiBinding);
+            }
+        }
     }
 
     private boolean canControlGameplay(Minecraft minecraft) {
@@ -275,11 +310,17 @@ public final class ModKeyBindingController {
             && minecraft.inGameHasFocus;
     }
 
+    private boolean canControlNeiGui(Minecraft minecraft) {
+        return Config.enableGuiControls && gamepadManager.isConnected()
+            && minecraft.thePlayer != null
+            && minecraft.currentScreen instanceof GuiContainer;
+    }
+
     private boolean releaseControlledBindings() {
         boolean releasedAnyBinding = false;
         for (BindingState state : states.values()) {
             if (state.controllerDown) {
-                updateExactBinding(state.entry.getKeyBinding(), true, false);
+                updateBindingState(state.entry, true, false, Minecraft.getMinecraft());
                 state.controllerDown = false;
                 releasedAnyBinding = true;
             }
@@ -308,6 +349,17 @@ public final class ModKeyBindingController {
         if (wasControllerDown || controllerDown) {
             accessor.gtnhcontroller$setPressed(controllerDown || isPhysicalInputDown(binding));
         }
+    }
+
+    private boolean updateBindingState(RegisteredKeyBinding entry, boolean wasControllerDown, boolean controllerDown,
+        Minecraft minecraft) {
+        if (entry.getKeyBinding() != null) {
+            updateExactBinding(entry.getKeyBinding(), wasControllerDown, controllerDown);
+        }
+        if (entry.getNeiBinding() != null) {
+            return neiKeyBindingAdapter.update(entry.getNeiBinding(), wasControllerDown, controllerDown, minecraft);
+        }
+        return false;
     }
 
     private static boolean isPhysicalInputDown(KeyBinding binding) {
@@ -345,6 +397,48 @@ public final class ModKeyBindingController {
             }
         }
         return true;
+    }
+
+    static boolean sameNeiRegistry(List<NeiKeyBinding> first, List<NeiKeyBinding> second) {
+        if (first.size() != second.size()) {
+            return false;
+        }
+        for (int index = 0; index < first.size(); index++) {
+            if (!first.get(index)
+                .sameRegistryEntry(second.get(index))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void addNeiBinding(NeiKeyBinding neiBinding) {
+        if (states.containsKey(neiBinding.controllerIdentifier)) {
+            return;
+        }
+
+        String categoryName = localize(neiBinding.categoryKey);
+        if (neiBinding.legacy && !categoryName.toLowerCase(java.util.Locale.ROOT)
+            .contains("nei")) {
+            categoryName = "NEI / " + categoryName;
+        }
+        RegisteredKeyBinding entry = new RegisteredKeyBinding(
+            neiBinding.keyBinding,
+            neiBinding.controllerIdentifier,
+            neiBinding.categoryKey,
+            neiBinding.descriptionKey,
+            categoryName,
+            localize(neiBinding.descriptionKey),
+            1,
+            neiBinding);
+        ControllerBinding primaryBinding = safeParse(
+            Config.getModKeyBinding(neiBinding.controllerIdentifier, ControllerBindingLayer.PRIMARY),
+            entry.getDisplayName());
+        ControllerBinding modifierBinding = safeParse(
+            Config.getModKeyBinding(neiBinding.controllerIdentifier, ControllerBindingLayer.MODIFIER),
+            entry.getDisplayName() + " (Modifier)");
+        registeredBindings.add(entry);
+        states.put(neiBinding.controllerIdentifier, new BindingState(entry, primaryBinding, modifierBinding));
     }
 
     private static String localize(String translationKey) {
