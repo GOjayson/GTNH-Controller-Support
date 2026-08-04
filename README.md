@@ -118,14 +118,16 @@ SDL uses physical button positions, so the Xbox labels below map sensibly to oth
 | --- | --- |
 | Right stick | Move the virtual cursor |
 | South / Xbox A | Left-click and drag |
+| North / Xbox Y | Quick-move the hovered inventory stack |
 | West / Xbox X | Right-click and drag |
 | East / Xbox B | Back / Escape |
-| North / Xbox Y | Open or close the on-screen keyboard |
+| Back / Xbox View | Open or close the on-screen keyboard |
 | D-pad | Navigate buttons and inventory slots |
 | Left / right shoulder | Scroll up / down |
 | Right-stick click | Precision cursor while held |
 
-All core actions can be rebound. Drop Item is listed under Gameplay Bindings. Configure Modifier Layer there, then
+All core actions can be rebound. Quick Move Stack is listed under GUI Controller Bindings, while Drop Item is listed
+under Gameplay Bindings. Configure Modifier Layer there, then
 use the `Layer: Primary/Modifier` button in either binding editor to assign a second set of actions. LT, RT and
 independently exposed rear paddles can all be used as the modifier.
 

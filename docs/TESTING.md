@@ -177,6 +177,17 @@ Focus a text field with GUI Confirm before opening the keyboard. Verify that it:
   without changing the other field, including Backspace;
 - enters text in chat, a server address and at least one item-naming screen.
 
+## Inventory quick move
+
+- Open the player inventory and hover a non-empty slot with the controller cursor.
+- Press North / Xbox Y once and verify the complete stack moves between the player inventory and the open container.
+- Test a vanilla chest and at least one GTNH machine GUI with filtered or special-purpose slots.
+- Verify an empty slot, the area outside the container and a normal GUI button do nothing.
+- Pick up a stack with South / Xbox A, then press Quick Move and verify it does not send a second container action.
+- Verify South / Xbox A still performs an ordinary left-click and drag.
+- Verify Back / Xbox View opens the on-screen keyboard after upgrading from a configuration that used the old default.
+- Assign custom Quick Move and keyboard inputs, restart, and verify both custom bindings are preserved.
+
 ## Release verification
 
 1. Download the normal JAR from the GitHub Release.

@@ -2,6 +2,21 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.3.3
+
+### Added
+
+- Added a dedicated, rebindable Quick Move Stack GUI action for transferring the hovered stack with the container's
+  normal shift-click operation.
+
+### Changed
+
+- Assigned Quick Move Stack to North / Xbox Y by default.
+- Moved the default on-screen keyboard binding to Back / Xbox View because the D-pad is already required for GUI and
+  inventory navigation.
+- Existing configurations that still use the old North / Xbox Y keyboard default are migrated automatically. Custom
+  keyboard bindings are preserved.
+
 ## 1.3.2
 
 ### Added

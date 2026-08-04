@@ -26,6 +26,7 @@ public final class Config {
 
     private static final String VANILLA_DROP_IDENTIFIER = ModKeyBindingIdentifier
         .create("key.categories.gameplay", "key.drop", 1);
+    private static final String LEGACY_GUI_KEYBOARD_DEFAULT = "BUTTON:NORTH";
 
     public static boolean showDebugOverlay = true;
     public static int rescanIntervalTicks = 40;
@@ -84,9 +85,10 @@ public final class Config {
     public static String radialMenuBinding = "BUTTON:BACK";
     public static String modifierLayerBinding = "NONE";
     public static String guiConfirmBinding = "BUTTON:SOUTH";
+    public static String guiQuickMoveBinding = "BUTTON:NORTH";
     public static String guiAlternateBinding = "BUTTON:WEST";
     public static String guiBackBinding = "BUTTON:EAST";
-    public static String guiKeyboardBinding = "BUTTON:NORTH";
+    public static String guiKeyboardBinding = "BUTTON:BACK";
     public static String guiScrollUpBinding = "BUTTON:LEFT_SHOULDER";
     public static String guiScrollDownBinding = "BUTTON:RIGHT_SHOULDER";
     public static String guiNavigateUpBinding = "BUTTON:DPAD_UP";
@@ -115,6 +117,7 @@ public final class Config {
     public static void synchronize(File suggestedConfigFile) {
         configFile = suggestedConfigFile;
         Configuration configuration = new Configuration(suggestedConfigFile);
+        boolean hadQuickMoveBinding = configuration.hasKey("bindings", ControllerAction.GUI_QUICK_MOVE.configKey);
 
         showDebugOverlay = configuration.getBoolean(
             "showDebugOverlay",
@@ -397,6 +400,11 @@ public final class Config {
             "guiConfirm",
             guiConfirmBinding,
             "Left-click while a GUI is open.");
+        guiQuickMoveBinding = getBinding(
+            configuration,
+            "guiQuickMove",
+            guiQuickMoveBinding,
+            "Immediately transfer the hovered inventory stack using the container's normal shift-click operation.");
         guiAlternateBinding = getBinding(
             configuration,
             "guiAlternate",
@@ -408,6 +416,7 @@ public final class Config {
             "guiKeyboard",
             guiKeyboardBinding,
             "Open or close the on-screen keyboard while a GUI is open.");
+        migrateLegacyGuiKeyboardBinding(configuration, hadQuickMoveBinding);
         guiScrollUpBinding = getBinding(
             configuration,
             "guiScrollUp",
@@ -526,6 +535,8 @@ public final class Config {
                 return modifierLayerBinding;
             case GUI_CONFIRM:
                 return guiConfirmBinding;
+            case GUI_QUICK_MOVE:
+                return guiQuickMoveBinding;
             case GUI_ALTERNATE:
                 return guiAlternateBinding;
             case GUI_BACK:
@@ -591,6 +602,9 @@ public final class Config {
                 break;
             case GUI_CONFIRM:
                 guiConfirmBinding = binding;
+                break;
+            case GUI_QUICK_MOVE:
+                guiQuickMoveBinding = binding;
                 break;
             case GUI_ALTERNATE:
                 guiAlternateBinding = binding;
@@ -885,6 +899,24 @@ public final class Config {
         }
         configuration.get("modifierModBindings", "entries", new String[0])
             .set(ModKeyBindingConfigCodec.encode(modifierModKeyBindings));
+    }
+
+    private static void migrateLegacyGuiKeyboardBinding(Configuration configuration, boolean hadQuickMoveBinding) {
+        String migratedBinding = migratedGuiKeyboardBinding(hadQuickMoveBinding, guiKeyboardBinding);
+        if (migratedBinding.equals(guiKeyboardBinding)) {
+            return;
+        }
+
+        guiKeyboardBinding = migratedBinding;
+        configuration.get("bindings", ControllerAction.GUI_KEYBOARD.configKey, guiKeyboardBinding)
+            .set(guiKeyboardBinding);
+    }
+
+    static String migratedGuiKeyboardBinding(boolean hadQuickMoveBinding, String configuredKeyboardBinding) {
+        if (hadQuickMoveBinding || !LEGACY_GUI_KEYBOARD_DEFAULT.equalsIgnoreCase(configuredKeyboardBinding)) {
+            return configuredKeyboardBinding;
+        }
+        return ControllerAction.GUI_KEYBOARD.defaultBinding;
     }
 
     private static float migrateLegacyGuiValue(Configuration configuration, String name, float configuredValue,

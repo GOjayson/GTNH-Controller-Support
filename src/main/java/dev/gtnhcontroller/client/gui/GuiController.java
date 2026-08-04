@@ -9,6 +9,7 @@ import static dev.gtnhcontroller.client.input.ControllerAction.GUI_NAV_LEFT;
 import static dev.gtnhcontroller.client.input.ControllerAction.GUI_NAV_RIGHT;
 import static dev.gtnhcontroller.client.input.ControllerAction.GUI_NAV_UP;
 import static dev.gtnhcontroller.client.input.ControllerAction.GUI_PRECISION;
+import static dev.gtnhcontroller.client.input.ControllerAction.GUI_QUICK_MOVE;
 import static dev.gtnhcontroller.client.input.ControllerAction.GUI_SCROLL_DOWN;
 import static dev.gtnhcontroller.client.input.ControllerAction.GUI_SCROLL_UP;
 import static dev.gtnhcontroller.client.input.ControllerAxis.LEFT_X;
@@ -148,6 +149,13 @@ public final class GuiController {
 
         updateNavigation();
         updateScrolling();
+
+        if (controllerProfile.wasPressed(GUI_QUICK_MOVE)) {
+            releaseHeldButtons(minecraft, activeScreen);
+            if (inputCompatibility.quickMove(minecraft, activeScreen, cursorX(activeScreen), cursorY(activeScreen))) {
+                return;
+            }
+        }
 
         updateMouseButton(activeScreen, 0, controllerProfile.isDown(GUI_CONFIRM));
         if (minecraft.currentScreen != activeScreen) {

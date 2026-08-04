@@ -212,5 +212,10 @@ Standard button names include `SOUTH`, `EAST`, `WEST`, `NORTH`, `BACK`, `GUIDE`,
 shoulders, all D-pad directions, `TOUCHPAD`, `MISC1` through `MISC6`, and the four paddle names. Trigger names are
 `LEFT_TRIGGER` and `RIGHT_TRIGGER`.
 
+`bindings.guiQuickMove` defaults to `BUTTON:NORTH`. It transfers the stack under the GUI cursor using the active
+container's normal shift-click behavior. `bindings.guiKeyboard` defaults to `BUTTON:BACK`. When upgrading from an
+older release, an unchanged `BUTTON:NORTH` keyboard binding is moved to `BUTTON:BACK` once Quick Move is introduced;
+other keyboard bindings are left untouched.
+
 Changes made directly in the configuration file require a restart. Changes made through the in-game screens apply
 immediately.

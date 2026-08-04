@@ -30,6 +30,16 @@ public class ControllerBindingTest {
     }
 
     @Test
+    public void quickMoveAndKeyboardHaveSeparateDefaults() {
+        ControllerBinding quickMove = ControllerBinding.parse(ControllerAction.GUI_QUICK_MOVE.defaultBinding);
+        ControllerBinding keyboard = ControllerBinding.parse(ControllerAction.GUI_KEYBOARD.defaultBinding);
+
+        assertFalse(quickMove.conflictsWith(keyboard));
+        assertTrue(quickMove.conflictsWith(ControllerBinding.parse("BUTTON:NORTH")));
+        assertTrue(keyboard.conflictsWith(ControllerBinding.parse("BUTTON:BACK")));
+    }
+
+    @Test
     public void noneCreatesAnEmptyBinding() {
         assertTrue(
             ControllerBinding.parse("NONE")

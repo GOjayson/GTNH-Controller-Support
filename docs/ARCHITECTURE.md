@@ -15,6 +15,8 @@ Gameplay and GUI control are intentionally separate:
 
 - `GameplayController` handles movement, camera, core actions and safe release.
 - `GuiController` owns the virtual cursor, clicks, navigation, scrolling and the keyboard overlay.
+- Quick Move resolves the visible container slot under the virtual cursor and invokes that container's normal
+  shift-click operation directly. It does not fake a global Shift key, so unrelated mod shortcuts cannot fire.
 - `RadialMenuController` dispatches one registered action or one explicitly selected single-line chat macro after
   radial selection. Hold and Toggle opening modes share the same action resolver.
 - `ModKeyBindingController` maps SDL inputs to exact registered `KeyBinding` objects and optional external registries.

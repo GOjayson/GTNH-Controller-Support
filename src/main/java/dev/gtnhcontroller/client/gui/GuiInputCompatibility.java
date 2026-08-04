@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.gui.GuiMultiplayer;
 import net.minecraft.client.gui.GuiScreen;
@@ -12,11 +13,13 @@ import net.minecraft.client.gui.GuiSlot;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
+import net.minecraft.inventory.Slot;
 
 import org.lwjgl.input.Keyboard;
 
 import dev.gtnhcontroller.GTNHController;
 import dev.gtnhcontroller.mixins.CreativeContainerControllerAccessor;
+import dev.gtnhcontroller.mixins.GuiContainerControllerAccessor;
 import dev.gtnhcontroller.mixins.GuiContainerCreativeControllerAccessor;
 import dev.gtnhcontroller.mixins.GuiSlotControllerAccessor;
 
@@ -84,6 +87,23 @@ final class GuiInputCompatibility {
     void mouseReleased(GuiScreen screen, int mouseX, int mouseY, int mouseButton) {
         invokeBetterQuesting(screen, "onMouseRelease", mouseX, mouseY, mouseButton);
         journeyMapInputAdapter.mouseReleased(screen, mouseButton);
+    }
+
+    boolean quickMove(Minecraft minecraft, GuiScreen screen, int mouseX, int mouseY) {
+        if (!(screen instanceof GuiContainer)) {
+            return false;
+        }
+        if (minecraft.thePlayer == null || minecraft.thePlayer.inventory.getItemStack() != null) {
+            return true;
+        }
+
+        GuiContainer container = (GuiContainer) screen;
+        GuiContainerControllerAccessor accessor = (GuiContainerControllerAccessor) (Object) container;
+        Slot slot = findSlotAt(container, accessor, mouseX, mouseY);
+        if (slot != null && slot.getHasStack()) {
+            accessor.gtnhcontroller$handleMouseClick(slot, slot.slotNumber, 0, 1);
+        }
+        return true;
     }
 
     boolean scroll(GuiScreen screen, int mouseX, int mouseY, int direction) {
@@ -198,6 +218,25 @@ final class GuiInputCompatibility {
         accessor.gtnhcontroller$setCurrentScroll(scrollPosition);
         container.gtnhcontroller$scrollTo(scrollPosition);
         return true;
+    }
+
+    private static Slot findSlotAt(GuiContainer container, GuiContainerControllerAccessor accessor, int mouseX,
+        int mouseY) {
+        int relativeMouseX = mouseX - accessor.gtnhcontroller$getGuiLeft();
+        int relativeMouseY = mouseY - accessor.gtnhcontroller$getGuiTop();
+        for (Object entry : container.inventorySlots.inventorySlots) {
+            if (!(entry instanceof Slot)) {
+                continue;
+            }
+            Slot slot = (Slot) entry;
+            if (slot.func_111238_b() && relativeMouseX >= slot.xDisplayPosition
+                && relativeMouseX < slot.xDisplayPosition + 16
+                && relativeMouseY >= slot.yDisplayPosition
+                && relativeMouseY < slot.yDisplayPosition + 16) {
+                return slot;
+            }
+        }
+        return null;
     }
 
     private void clickWorldList(GuiSelectWorld screen, int mouseX, int mouseY, int mouseButton) {
