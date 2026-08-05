@@ -13,6 +13,9 @@ public class ControllerBindingDisplayTest {
         assertEquals(
             "Left Shoulder / D-pad Left",
             ControllerBindingDisplay.format("BUTTON:LEFT_SHOULDER|BUTTON:DPAD_LEFT"));
+        assertEquals(
+            "Left Shoulder + South / Left Trigger + North",
+            ControllerBindingDisplay.format("BUTTON:LEFT_SHOULDER+BUTTON:SOUTH|TRIGGER:LEFT_TRIGGER+BUTTON:NORTH"));
     }
 
     @Test

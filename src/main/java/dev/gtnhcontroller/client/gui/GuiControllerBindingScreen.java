@@ -44,6 +44,7 @@ public final class GuiControllerBindingScreen extends GuiScreen
     private int page;
     private ControllerBindingLayer bindingLayer = ControllerBindingLayer.PRIMARY;
     private ControllerAction captureAction;
+    private final ControllerChordCapture chordCapture = new ControllerChordCapture();
     private boolean captureArmed;
     private boolean waitingForCapturedInputRelease;
 
@@ -91,9 +92,11 @@ public final class GuiControllerBindingScreen extends GuiScreen
             return;
         }
 
-        String capturedBinding = gamepadManager.getNewBindableInput(CAPTURE_TRIGGER_THRESHOLD);
+        String capturedBinding = chordCapture.update(gamepadManager.getBindableInputsDown(CAPTURE_TRIGGER_THRESHOLD));
         if (capturedBinding != null) {
             applyBinding(capturedBinding);
+        } else if (chordCapture.hasStarted()) {
+            rebuildButtons();
         }
     }
 
@@ -236,7 +239,8 @@ public final class GuiControllerBindingScreen extends GuiScreen
         for (int actionIndex = firstAction; actionIndex < finalAction; actionIndex++) {
             int row = actionIndex - firstAction;
             ControllerAction action = filteredActions.get(actionIndex);
-            String bindingLabel = action == captureAction ? (captureArmed ? "> Press input <" : "Release inputs")
+            String bindingLabel = action == captureAction
+                ? (captureArmed ? "> " + chordCapture.displayValue() + " <" : "Release inputs")
                 : formatBinding(action);
 
             GuiButton bindingButton = new GuiButton(
@@ -325,6 +329,7 @@ public final class GuiControllerBindingScreen extends GuiScreen
     private void beginCapture(ControllerAction action) {
         captureAction = action;
         captureArmed = false;
+        chordCapture.reset();
         searchField.setFocused(false);
         rebuildButtons();
     }
@@ -337,6 +342,7 @@ public final class GuiControllerBindingScreen extends GuiScreen
     private void waitForInputRelease() {
         captureAction = null;
         captureArmed = false;
+        chordCapture.reset();
         waitingForCapturedInputRelease = true;
         rebuildButtons();
     }
@@ -364,7 +370,7 @@ public final class GuiControllerBindingScreen extends GuiScreen
             return "Release the controller input to continue";
         }
         if (captureAction != null) {
-            return captureArmed ? "Press a controller button or trigger - Escape cancels"
+            return captureArmed ? "Hold a button combination, then release it - Escape cancels"
                 : "Release all controller buttons and triggers";
         }
         return "Hover a red ! binding to see the exact conflicting actions";

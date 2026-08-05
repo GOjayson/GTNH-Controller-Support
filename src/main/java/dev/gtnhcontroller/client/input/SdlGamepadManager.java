@@ -26,12 +26,19 @@ import static org.lwjgl.sdl.SDLProperties.SDL_GetBooleanProperty;
 import static org.lwjgl.sdl.SDLStdinc.SDL_free;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryUtil;
 
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -61,6 +68,10 @@ public final class SdlGamepadManager {
     private String gamepadName = "";
     private boolean rumbleSupported;
     private boolean rumbleFailureLogged;
+    private boolean batteryApiUnavailable;
+    private int ticksUntilBatteryQuery;
+    private ControllerBatteryStatus batteryStatus = ControllerBatteryStatus.UNAVAILABLE;
+    private String gamepadMapping = "Unavailable";
     private long rumbleUntilNanos;
     private int activeRumblePriority;
 
@@ -90,6 +101,10 @@ public final class SdlGamepadManager {
 
         if (gamepad != NULL) {
             pollState();
+            if (!batteryApiUnavailable && ticksUntilBatteryQuery-- <= 0) {
+                ticksUntilBatteryQuery = 100;
+                queryBatteryStatus();
+            }
         }
     }
 
@@ -103,6 +118,22 @@ public final class SdlGamepadManager {
         }
         return ControllerSelection.isAutomatic(Config.controllerSelection) ? "No gamepad detected"
             : "Waiting for selected controller";
+    }
+
+    public String getGamepadName() {
+        return gamepadName.isEmpty() ? "Unavailable" : gamepadName;
+    }
+
+    public int getGamepadInstanceId() {
+        return gamepadInstanceId;
+    }
+
+    public String getGamepadMapping() {
+        return gamepadMapping;
+    }
+
+    public ControllerBatteryStatus getBatteryStatus() {
+        return batteryStatus;
     }
 
     public List<ControllerDevice> getAvailableGamepads() {
@@ -198,6 +229,23 @@ public final class SdlGamepadManager {
             || getTrigger(ControllerAxis.RIGHT_TRIGGER) >= triggerThreshold;
     }
 
+    /** Returns all currently held bindable inputs in a stable order suitable for chord capture. */
+    public List<String> getBindableInputsDown(float triggerThreshold) {
+        List<String> inputs = new ArrayList<String>();
+        for (ControllerButton button : ControllerButton.values()) {
+            if (isButtonDown(button)) {
+                inputs.add("BUTTON:" + button.name());
+            }
+        }
+        if (getTrigger(ControllerAxis.LEFT_TRIGGER) >= triggerThreshold) {
+            inputs.add("TRIGGER:" + ControllerAxis.LEFT_TRIGGER.name());
+        }
+        if (getTrigger(ControllerAxis.RIGHT_TRIGGER) >= triggerThreshold) {
+            inputs.add("TRIGGER:" + ControllerAxis.RIGHT_TRIGGER.name());
+        }
+        return inputs;
+    }
+
     public String getNewBindableInput(float triggerThreshold) {
         for (ControllerButton button : ControllerButton.values()) {
             if (wasButtonPressed(button)) {
@@ -242,6 +290,21 @@ public final class SdlGamepadManager {
         }
 
         return pressed.length() == 0 ? "-" : pressed.toString();
+    }
+
+    public String getCapabilityLine() {
+        StringBuilder capabilities = new StringBuilder();
+        for (ControllerAxis axis : ControllerAxis.values()) {
+            if (hasAxis(axis)) {
+                appendCapability(capabilities, axis.name());
+            }
+        }
+        for (ControllerButton button : ControllerButton.values()) {
+            if (hasButton(button)) {
+                appendCapability(capabilities, button.name());
+            }
+        }
+        return capabilities.length() == 0 ? "Unavailable" : capabilities.toString();
     }
 
     public boolean supportsRumble() {
@@ -329,6 +392,10 @@ public final class SdlGamepadManager {
                 queryCapabilities();
                 rumbleFailureLogged = false;
                 queryRumbleSupport();
+                batteryApiUnavailable = false;
+                ticksUntilBatteryQuery = 100;
+                queryBatteryStatus();
+                gamepadMapping = queryGamepadMapping();
                 GTNHController.LOG.info(
                     "Connected SDL gamepad {} ({}, rumble {})",
                     gamepadName,
@@ -397,6 +464,111 @@ public final class SdlGamepadManager {
         }
     }
 
+    private void queryBatteryStatus() {
+        try {
+            Method getJoystick = findStaticMethod("org.lwjgl.sdl.SDLGamepad", "SDL_GetGamepadJoystick", 1);
+            long joystick = ((Number) getJoystick.invoke(null, Long.valueOf(gamepad))).longValue();
+            if (joystick == NULL) {
+                batteryStatus = ControllerBatteryStatus.UNAVAILABLE;
+                return;
+            }
+
+            Method getPower = findPowerInfoMethod();
+            Class<?> percentType = getPower.getParameterTypes()[1];
+            Object percentArgument;
+            if (percentType.isArray()) {
+                percentArgument = new int[] { -1 };
+            } else {
+                IntBuffer percentBuffer = BufferUtils.createIntBuffer(1);
+                percentBuffer.put(0, -1);
+                percentArgument = percentBuffer;
+            }
+            int state = ((Number) getPower.invoke(null, Long.valueOf(joystick), percentArgument)).intValue();
+            int percent = percentArgument instanceof int[] ? ((int[]) percentArgument)[0]
+                : ((IntBuffer) percentArgument).get(0);
+            batteryStatus = ControllerBatteryStatus.fromSdl(state, percent);
+        } catch (Throwable throwable) {
+            batteryApiUnavailable = true;
+            batteryStatus = ControllerBatteryStatus.UNAVAILABLE;
+            GTNHController.LOG
+                .debug("SDL controller battery API is unavailable; battery display is disabled.", throwable);
+        }
+    }
+
+    private String queryGamepadMapping() {
+        Object mapping = null;
+        try {
+            Method getMapping = findStaticMethod("org.lwjgl.sdl.SDLGamepad", "SDL_GetGamepadMapping", 1);
+            mapping = getMapping.invoke(null, Long.valueOf(gamepad));
+            if (mapping instanceof String) {
+                return (String) mapping;
+            }
+            if (mapping instanceof ByteBuffer) {
+                return MemoryUtil.memUTF8((ByteBuffer) mapping);
+            }
+            if (mapping instanceof Number && ((Number) mapping).longValue() != NULL) {
+                return MemoryUtil.memUTF8(((Number) mapping).longValue());
+            }
+        } catch (Throwable throwable) {
+            GTNHController.LOG.debug("SDL gamepad mapping export is unavailable.", throwable);
+        } finally {
+            freeNativeResult(mapping);
+        }
+        return "Unavailable";
+    }
+
+    private static Method findPowerInfoMethod() throws ReflectiveOperationException {
+        Class<?> joystickClass = Class.forName("org.lwjgl.sdl.SDLJoystick");
+        for (Method method : joystickClass.getMethods()) {
+            if ("SDL_GetJoystickPowerInfo".equals(method.getName()) && Modifier.isStatic(method.getModifiers())
+                && method.getParameterTypes().length == 2) {
+                Class<?> percentType = method.getParameterTypes()[1];
+                if (percentType == IntBuffer.class || percentType == int[].class) {
+                    return method;
+                }
+            }
+        }
+        throw new NoSuchMethodException("SDL_GetJoystickPowerInfo");
+    }
+
+    private static Method findStaticMethod(String className, String methodName, int parameterCount)
+        throws ReflectiveOperationException {
+        Class<?> owner = Class.forName(className);
+        for (Method method : owner.getMethods()) {
+            if (methodName.equals(method.getName()) && Modifier.isStatic(method.getModifiers())
+                && method.getParameterTypes().length == parameterCount) {
+                return method;
+            }
+        }
+        throw new NoSuchMethodException(className + "." + methodName);
+    }
+
+    private static void freeNativeResult(Object nativeResult) {
+        if (!(nativeResult instanceof Buffer) && !(nativeResult instanceof Number)) {
+            return;
+        }
+        try {
+            Class<?> stdinc = Class.forName("org.lwjgl.sdl.SDLStdinc");
+            for (Method method : stdinc.getMethods()) {
+                if (!"SDL_free".equals(method.getName()) || !Modifier.isStatic(method.getModifiers())
+                    || method.getParameterTypes().length != 1) {
+                    continue;
+                }
+                Class<?> parameterType = method.getParameterTypes()[0];
+                if (nativeResult instanceof Buffer && parameterType.isAssignableFrom(nativeResult.getClass())) {
+                    method.invoke(null, nativeResult);
+                    return;
+                }
+                if (nativeResult instanceof Number && parameterType == Long.TYPE) {
+                    method.invoke(null, Long.valueOf(((Number) nativeResult).longValue()));
+                    return;
+                }
+            }
+        } catch (Throwable ignored) {
+            // Mapping export remains useful even if this binding lacks a matching convenience overload.
+        }
+    }
+
     private void disableUnavailableRumbleApi(LinkageError error) {
         rumbleSupported = false;
         if (!rumbleFailureLogged) {
@@ -429,8 +601,11 @@ public final class SdlGamepadManager {
         gamepad = NULL;
         gamepadInstanceId = -1;
         gamepadName = "";
+        gamepadMapping = "Unavailable";
         rumbleSupported = false;
         rumbleFailureLogged = false;
+        batteryStatus = ControllerBatteryStatus.UNAVAILABLE;
+        batteryApiUnavailable = false;
 
         for (int axis = 0; axis < axes.length; axis++) {
             axes[axis] = 0;
@@ -446,5 +621,12 @@ public final class SdlGamepadManager {
 
     private static short toUnsignedShort(float value) {
         return (short) Math.round(value * 65535.0F);
+    }
+
+    private static void appendCapability(StringBuilder capabilities, String value) {
+        if (capabilities.length() > 0) {
+            capabilities.append(", ");
+        }
+        capabilities.append(value);
     }
 }

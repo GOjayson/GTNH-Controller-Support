@@ -66,7 +66,8 @@ public final class ModKeyBindingController {
             boolean canControlState = gameplayControl || neiGuiControl && state.entry.getNeiBinding() != null;
             ControllerBinding controllerBinding = state.getBinding(controllerProfile.isModifierActive());
             boolean controllerDown = canControlState && !controllerBinding.isEmpty()
-                && controllerBinding.isDown(gamepadManager, Config.triggerThreshold);
+                && controllerBinding.isDown(gamepadManager, Config.triggerThreshold)
+                && !controllerProfile.isBindingSuperseded(controllerBinding, state.entry.getNeiBinding() != null);
             controllerStateChanged |= state.controllerDown != controllerDown;
             if (controllerDown && !state.controllerDown) {
                 dispatchEventDrivenVanillaBinding(minecraft, state.entry);
@@ -157,6 +158,7 @@ public final class ModKeyBindingController {
             }
             state.setBinding(layer, parsedBinding);
             state.controllerDown = false;
+            updateProfileCompetitors();
         }
     }
 
@@ -301,6 +303,7 @@ public final class ModKeyBindingController {
                 addNeiBinding(neiBinding);
             }
         }
+        updateProfileCompetitors();
     }
 
     private boolean canControlGameplay(Minecraft minecraft) {
@@ -308,6 +311,19 @@ public final class ModKeyBindingController {
             && minecraft.thePlayer != null
             && minecraft.currentScreen == null
             && minecraft.inGameHasFocus;
+    }
+
+    private void updateProfileCompetitors() {
+        List<ControllerBinding> gameplayPrimary = new ArrayList<ControllerBinding>();
+        List<ControllerBinding> gameplayModifier = new ArrayList<ControllerBinding>();
+        List<ControllerBinding> guiPrimary = new ArrayList<ControllerBinding>();
+        List<ControllerBinding> guiModifier = new ArrayList<ControllerBinding>();
+        for (BindingState state : states.values()) {
+            boolean guiBinding = state.entry.getNeiBinding() != null;
+            (guiBinding ? guiPrimary : gameplayPrimary).add(state.primaryBinding);
+            (guiBinding ? guiModifier : gameplayModifier).add(state.modifierBinding);
+        }
+        controllerProfile.setSupplementalBindings(gameplayPrimary, gameplayModifier, guiPrimary, guiModifier);
     }
 
     private boolean canControlNeiGui(Minecraft minecraft) {

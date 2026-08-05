@@ -150,6 +150,10 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
         return true;
     }
 
+    public String getPageName() {
+        return radialPage.displayName;
+    }
+
     private void drawSector(int centerX, int centerY, int slot, boolean selected) {
         double sectorSize = Math.PI * 2.0D / entryLabels.length;
         double centerAngle = -Math.PI / 2.0D + slot * sectorSize;

@@ -21,6 +21,16 @@ public class ControllerBindingTest {
     }
 
     @Test
+    public void parsesMultiButtonAndTriggerChords() {
+        ControllerBinding binding = ControllerBinding
+            .parse("BUTTON:LEFT_SHOULDER+BUTTON:SOUTH|TRIGGER:LEFT_TRIGGER+BUTTON:NORTH");
+
+        assertEquals(3, binding.getButtonCount());
+        assertEquals(1, binding.getTriggerCount());
+        assertEquals(2, binding.getAlternativeCount());
+    }
+
+    @Test
     public void everyDefaultActionBindingIsValid() {
         Set<String> configKeys = new HashSet<String>();
         for (ControllerAction action : ControllerAction.values()) {
@@ -54,6 +64,20 @@ public class ControllerBindingTest {
         assertTrue(first.conflictsWith(ControllerBinding.parse("TRIGGER:LEFT_TRIGGER")));
         assertFalse(first.conflictsWith(ControllerBinding.parse("BUTTON:NORTH")));
         assertFalse(first.conflictsWith(ControllerBinding.parse("NONE")));
+    }
+
+    @Test
+    public void componentButtonDoesNotConflictWithAChord() {
+        ControllerBinding plain = ControllerBinding.parse("BUTTON:SOUTH");
+        ControllerBinding chord = ControllerBinding.parse("BUTTON:LEFT_SHOULDER+BUTTON:SOUTH");
+
+        assertFalse(plain.conflictsWith(chord));
+        assertTrue(chord.conflictsWith(ControllerBinding.parse("BUTTON:SOUTH+BUTTON:LEFT_SHOULDER")));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void rejectsEmptyChordParts() {
+        ControllerBinding.parse("BUTTON:SOUTH+");
     }
 
     @Test(expected = IllegalArgumentException.class)

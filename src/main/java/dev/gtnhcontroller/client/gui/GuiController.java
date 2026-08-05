@@ -24,6 +24,7 @@ import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraftforge.client.event.GuiScreenEvent;
 
 import org.lwjgl.input.Keyboard;
@@ -58,6 +59,9 @@ public final class GuiController {
     private final OnScreenKeyboardOverlay onScreenKeyboard = new OnScreenKeyboardOverlay(inputCompatibility);
     private final Map<ControllerAction, InputRepeatTimer> repeatTimers = new EnumMap<ControllerAction, InputRepeatTimer>(
         ControllerAction.class);
+    private final AcceleratedInputRepeatTimer scrollUpRepeatTimer = new AcceleratedInputRepeatTimer();
+    private final AcceleratedInputRepeatTimer scrollDownRepeatTimer = new AcceleratedInputRepeatTimer();
+    private final CursorTrail cursorTrail = new CursorTrail();
     private GuiScreen activeScreen;
     private boolean leftHeld;
     private boolean rightHeld;
@@ -211,6 +215,11 @@ public final class GuiController {
             onScreenKeyboard.draw(event.gui);
             return;
         }
+        if (Config.showControllerPrompts && gamepadManager.isConnected()
+            && !isControllerInputCaptured()
+            && !(event.gui instanceof ControllerConfigurationScreen)) {
+            drawControllerPrompts(event.gui);
+        }
         if (!shouldSubstituteCursor(event.gui)) {
             return;
         }
@@ -296,6 +305,11 @@ public final class GuiController {
         }
         if (cursorY != nextCursorY) {
             cursorVelocityY = 0.0F;
+        }
+        if (Config.cursorTrail) {
+            cursorTrail.record(Math.round(cursorX), Math.round(cursorY));
+        } else {
+            cursorTrail.clear();
         }
         synchronizeNativeCursor(minecraft, screen);
     }
@@ -418,8 +432,8 @@ public final class GuiController {
 
     private void updateScrolling() {
         long currentTimeMillis = System.currentTimeMillis();
-        boolean scrollUp = shouldActivate(GUI_SCROLL_UP, currentTimeMillis);
-        boolean scrollDown = shouldActivate(GUI_SCROLL_DOWN, currentTimeMillis);
+        boolean scrollUp = shouldActivateScroll(GUI_SCROLL_UP, scrollUpRepeatTimer, currentTimeMillis);
+        boolean scrollDown = shouldActivateScroll(GUI_SCROLL_DOWN, scrollDownRepeatTimer, currentTimeMillis);
         if (scrollUp == scrollDown) {
             return;
         }
@@ -442,11 +456,25 @@ public final class GuiController {
             Config.navigationRepeatIntervalMillis);
     }
 
+    private boolean shouldActivateScroll(ControllerAction action, AcceleratedInputRepeatTimer repeatTimer,
+        long currentTimeMillis) {
+        return repeatTimer.shouldActivate(
+            controllerProfile.isDown(action),
+            currentTimeMillis,
+            Config.navigationInitialDelayMillis,
+            Config.navigationRepeatIntervalMillis,
+            Config.scrollAccelerationEnabled,
+            Config.scrollAccelerationMultiplier);
+    }
+
     private void moveCursorTo(int x, int y) {
         cursorX = InputMath.clamp(x, 0.0F, Math.max(activeScreen.width - 1, 0));
         cursorY = InputMath.clamp(y, 0.0F, Math.max(activeScreen.height - 1, 0));
         cursorInitialized = true;
         controllerOwnsCursor = true;
+        if (Config.cursorTrail) {
+            cursorTrail.record(Math.round(cursorX), Math.round(cursorY));
+        }
         stopCursorMotion();
     }
 
@@ -454,6 +482,8 @@ public final class GuiController {
         for (InputRepeatTimer repeatTimer : repeatTimers.values()) {
             repeatTimer.reset();
         }
+        scrollUpRepeatTimer.reset();
+        scrollDownRepeatTimer.reset();
     }
 
     private void releaseHeldButtons(Minecraft minecraft, GuiScreen screen) {
@@ -550,6 +580,7 @@ public final class GuiController {
         cursorInitialized = false;
         controllerOwnsCursor = false;
         cursorWarpTracker.reset();
+        cursorTrail.clear();
     }
 
     private void hideCursorForCapture() {
@@ -559,6 +590,7 @@ public final class GuiController {
         cursorInitialized = false;
         controllerOwnsCursor = false;
         cursorWarpTracker.reset();
+        cursorTrail.clear();
     }
 
     private void hideCursorForKeyboard() {
@@ -610,16 +642,69 @@ public final class GuiController {
         GL11.glLoadIdentity();
         GL11.glDisable(GL11.GL_DEPTH_TEST);
 
-        Gui.drawRect(mouseX - 1, mouseY - 1, mouseX + 3, mouseY + 12, dark);
-        Gui.drawRect(mouseX - 1, mouseY - 1, mouseX + 9, mouseY + 3, dark);
-        Gui.drawRect(mouseX, mouseY, mouseX + 1, mouseY + 10, light);
-        Gui.drawRect(mouseX, mouseY, mouseX + 7, mouseY + 1, light);
+        if (Config.cursorTrail) {
+            drawCursorTrail();
+        }
+        int scale = Config.largeCursor ? 2 : 1;
+        Gui.drawRect(mouseX - scale, mouseY - scale, mouseX + 3 * scale, mouseY + 12 * scale, dark);
+        Gui.drawRect(mouseX - scale, mouseY - scale, mouseX + 9 * scale, mouseY + 3 * scale, dark);
+        Gui.drawRect(mouseX, mouseY, mouseX + scale, mouseY + 10 * scale, light);
+        Gui.drawRect(mouseX, mouseY, mouseX + 7 * scale, mouseY + scale, light);
 
         GL11.glPopMatrix();
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glPopMatrix();
         GL11.glMatrixMode(previousMatrixMode);
         GL11.glPopAttrib();
+    }
+
+    private void drawCursorTrail() {
+        List<CursorTrail.Point> points = cursorTrail.getPoints();
+        for (int index = 0; index < points.size(); index++) {
+            CursorTrail.Point point = points.get(index);
+            int alpha = 32 + 112 * (index + 1) / Math.max(points.size(), 1);
+            int color = alpha << 24 | 0x007FFFFF;
+            int radius = Config.largeCursor ? 2 : 1;
+            Gui.drawRect(point.x - radius, point.y - radius, point.x + radius + 1, point.y + radius + 1, color);
+        }
+    }
+
+    private void drawControllerPrompts(GuiScreen screen) {
+        StringBuilder prompts = new StringBuilder();
+        appendPrompt(prompts, Config.guiConfirmBinding, "Select");
+        appendPrompt(prompts, Config.guiBackBinding, "Back");
+        boolean containerScreen = screen instanceof GuiContainer;
+        if (containerScreen) {
+            appendPrompt(prompts, Config.guiQuickMoveBinding, "Quick Move");
+        }
+        appendPrompt(prompts, Config.guiKeyboardBinding, "Keyboard");
+        String promptText = Minecraft.getMinecraft().fontRenderer
+            .trimStringToWidth(prompts.toString(), Math.max(screen.width - 8, 1));
+        int promptY = containerScreen ? screen.height - 12 : 2;
+        Gui.drawRect(0, promptY - 2, screen.width, promptY + 12, 0xB0101820);
+        int promptX = (screen.width - Minecraft.getMinecraft().fontRenderer.getStringWidth(promptText)) / 2;
+        Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(promptText, promptX, promptY, 0xFFFFFF);
+        if (containerScreen && gamepadManager.getBatteryStatus()
+            .isAvailable()) {
+            String battery = "Controller: " + gamepadManager.getBatteryStatus()
+                .getDisplayText();
+            int batteryX = screen.width - Minecraft.getMinecraft().fontRenderer.getStringWidth(battery) - 5;
+            Gui.drawRect(batteryX - 3, 3, screen.width - 2, 16, 0xA0101820);
+            Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(battery, batteryX, 5, 0xFFFFFF);
+        }
+    }
+
+    private static void appendPrompt(StringBuilder prompts, String binding, String action) {
+        if ("NONE".equalsIgnoreCase(binding)) {
+            return;
+        }
+        if (prompts.length() > 0) {
+            prompts.append("   ");
+        }
+        prompts.append('[')
+            .append(ControllerPromptFormatter.format(binding))
+            .append("] ")
+            .append(action);
     }
 
     private void setHeld(int mouseButton, boolean held) {

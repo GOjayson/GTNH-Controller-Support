@@ -18,6 +18,8 @@ public final class GuiControllerRumbleScreen extends GuiScreen implements Contro
     private static final int INTENSITY_DOWN = 5;
     private static final int INTENSITY_UP = 6;
     private static final int TEST = 7;
+    private static final int FISHING = 8;
+    private static final int LOW_HEALTH = 9;
     private static final int DONE = 200;
 
     private final GuiScreen parentScreen;
@@ -34,19 +36,23 @@ public final class GuiControllerRumbleScreen extends GuiScreen implements Contro
     public void initGui() {
         buttonList.clear();
         int centerX = width / 2;
-        buttonList.add(new GuiButton(MASTER, centerX - 100, 50, 200, 20, toggleLabel("Rumble", Config.rumbleEnabled)));
-        buttonList.add(new GuiButton(DAMAGE, centerX - 155, 74, 150, 20, toggleLabel("Damage", Config.rumbleDamage)));
+        buttonList.add(new GuiButton(MASTER, centerX - 100, 46, 200, 20, toggleLabel("Rumble", Config.rumbleEnabled)));
+        buttonList.add(new GuiButton(DAMAGE, centerX - 155, 70, 150, 20, toggleLabel("Damage", Config.rumbleDamage)));
         buttonList.add(
-            new GuiButton(EXPLOSIONS, centerX + 5, 74, 150, 20, toggleLabel("Explosions", Config.rumbleExplosions)));
-        buttonList.add(new GuiButton(MINING, centerX - 155, 98, 150, 20, toggleLabel("Mining", Config.rumbleMining)));
-        buttonList.add(new GuiButton(TEST, centerX + 5, 98, 150, 20, "Test Rumble"));
-        buttonList.add(new GuiButton(INTENSITY_DOWN, centerX - 155, 122, 45, 20, "-"));
-        buttonList.add(new GuiButton(INTENSITY_UP, centerX + 110, 122, 45, 20, "+"));
+            new GuiButton(EXPLOSIONS, centerX + 5, 70, 150, 20, toggleLabel("Explosions", Config.rumbleExplosions)));
+        buttonList.add(new GuiButton(MINING, centerX - 155, 94, 150, 20, toggleLabel("Mining", Config.rumbleMining)));
+        buttonList
+            .add(new GuiButton(FISHING, centerX + 5, 94, 150, 20, toggleLabel("Fishing Bites", Config.rumbleFishing)));
+        buttonList.add(
+            new GuiButton(LOW_HEALTH, centerX - 155, 118, 150, 20, toggleLabel("Low Health", Config.rumbleLowHealth)));
+        buttonList.add(new GuiButton(TEST, centerX + 5, 118, 150, 20, "Test Rumble"));
+        buttonList.add(new GuiButton(INTENSITY_DOWN, centerX - 155, 142, 45, 20, "-"));
+        buttonList.add(new GuiButton(INTENSITY_UP, centerX + 110, 142, 45, 20, "+"));
         buttonList.add(
             new GuiButton(
                 -1,
                 centerX - 105,
-                122,
+                142,
                 210,
                 20,
                 "Intensity: " + Math.round(Config.rumbleIntensity * 100.0F) + "%"));
@@ -81,6 +87,14 @@ public final class GuiControllerRumbleScreen extends GuiScreen implements Contro
                 break;
             case MINING:
                 Config.rumbleMining = !Config.rumbleMining;
+                saveAndRefresh();
+                break;
+            case FISHING:
+                Config.rumbleFishing = !Config.rumbleFishing;
+                saveAndRefresh();
+                break;
+            case LOW_HEALTH:
+                Config.rumbleLowHealth = !Config.rumbleLowHealth;
                 saveAndRefresh();
                 break;
             case INTENSITY_DOWN:
@@ -129,7 +143,7 @@ public final class GuiControllerRumbleScreen extends GuiScreen implements Contro
             fontRendererObj,
             "Effects are client-side and can be disabled independently.",
             width / 2,
-            153,
+            173,
             0xA0A0A0);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
@@ -148,6 +162,8 @@ public final class GuiControllerRumbleScreen extends GuiScreen implements Contro
             GuiButton button = (GuiButton) entry;
             if (button.id == DAMAGE || button.id == EXPLOSIONS
                 || button.id == MINING
+                || button.id == FISHING
+                || button.id == LOW_HEALTH
                 || button.id == INTENSITY_DOWN
                 || button.id == INTENSITY_UP) {
                 button.enabled = Config.rumbleEnabled;

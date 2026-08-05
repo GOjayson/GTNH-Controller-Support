@@ -18,6 +18,10 @@ public final class GuiControllerSensitivityScreen extends GuiScreen implements C
     private static final int CURSOR_DOWN = 7;
     private static final int CURSOR_VALUE = 8;
     private static final int CURSOR_UP = 9;
+    private static final int SCROLL_ACCELERATION = 10;
+    private static final int SCROLL_DOWN = 11;
+    private static final int SCROLL_VALUE = 12;
+    private static final int SCROLL_UP = 13;
     private static final int RESET_DEFAULTS = 100;
     private static final int DONE = 200;
 
@@ -26,6 +30,8 @@ public final class GuiControllerSensitivityScreen extends GuiScreen implements C
     private GuiButton moveValueButton;
     private GuiButton cameraValueButton;
     private GuiButton cursorValueButton;
+    private GuiButton scrollAccelerationButton;
+    private GuiButton scrollValueButton;
 
     public GuiControllerSensitivityScreen(GuiScreen parentScreen) {
         this.parentScreen = parentScreen;
@@ -39,8 +45,17 @@ public final class GuiControllerSensitivityScreen extends GuiScreen implements C
         addSensitivityRow(MOVE_DOWN, MOVE_VALUE, MOVE_UP, 58, Config.moveSensitivity);
         addSensitivityRow(CAMERA_DOWN, CAMERA_VALUE, CAMERA_UP, 84, Config.lookSensitivity);
         addSensitivityRow(CURSOR_DOWN, CURSOR_VALUE, CURSOR_UP, 110, Config.cursorSensitivity);
+        scrollAccelerationButton = new GuiButton(
+            SCROLL_ACCELERATION,
+            centerX + 5,
+            136,
+            145,
+            20,
+            scrollAccelerationLabel());
+        buttonList.add(scrollAccelerationButton);
+        addScrollSpeedRow(162);
 
-        buttonList.add(new GuiButton(RESET_DEFAULTS, centerX - 100, 146, 200, 20, "Reset Sensitivity Defaults"));
+        buttonList.add(new GuiButton(RESET_DEFAULTS, centerX - 100, 190, 200, 20, "Reset Sensitivity Defaults"));
         buttonList.add(new GuiButton(DONE, centerX - 100, height - 28, 200, 20, "Done"));
     }
 
@@ -65,10 +80,21 @@ public final class GuiControllerSensitivityScreen extends GuiScreen implements C
             case CURSOR_UP:
                 Config.cursorSensitivity = SensitivityValue.adjust(Config.cursorSensitivity, 1);
                 break;
+            case SCROLL_ACCELERATION:
+                Config.scrollAccelerationEnabled = !Config.scrollAccelerationEnabled;
+                break;
+            case SCROLL_DOWN:
+                Config.scrollAccelerationMultiplier = adjustScrollMultiplier(-1);
+                break;
+            case SCROLL_UP:
+                Config.scrollAccelerationMultiplier = adjustScrollMultiplier(1);
+                break;
             case RESET_DEFAULTS:
                 Config.moveSensitivity = SensitivityValue.DEFAULT;
                 Config.lookSensitivity = SensitivityValue.DEFAULT;
                 Config.cursorSensitivity = SensitivityValue.DEFAULT;
+                Config.scrollAccelerationEnabled = true;
+                Config.scrollAccelerationMultiplier = 3.0F;
                 break;
             case DONE:
                 mc.displayGuiScreen(parentScreen);
@@ -99,6 +125,8 @@ public final class GuiControllerSensitivityScreen extends GuiScreen implements C
         drawString(fontRendererObj, "Movement Response", width / 2 - 150, 64, 0xFFFFFF);
         drawString(fontRendererObj, "Camera", width / 2 - 150, 90, 0xFFFFFF);
         drawString(fontRendererObj, "GUI Cursor", width / 2 - 150, 116, 0xFFFFFF);
+        drawString(fontRendererObj, "Scroll Acceleration", width / 2 - 150, 142, 0xFFFFFF);
+        drawString(fontRendererObj, "Maximum Scroll Speed", width / 2 - 150, 168, 0xFFFFFF);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -124,5 +152,31 @@ public final class GuiControllerSensitivityScreen extends GuiScreen implements C
         moveValueButton.displayString = SensitivityValue.format(Config.moveSensitivity);
         cameraValueButton.displayString = SensitivityValue.format(Config.lookSensitivity);
         cursorValueButton.displayString = SensitivityValue.format(Config.cursorSensitivity);
+        scrollAccelerationButton.displayString = scrollAccelerationLabel();
+        scrollValueButton.displayString = Math.round(Config.scrollAccelerationMultiplier * 100.0F) + "%";
+    }
+
+    private void addScrollSpeedRow(int buttonY) {
+        int centerX = width / 2;
+        scrollValueButton = new GuiButton(
+            SCROLL_VALUE,
+            centerX + 35,
+            buttonY,
+            85,
+            20,
+            Math.round(Config.scrollAccelerationMultiplier * 100.0F) + "%");
+        scrollValueButton.enabled = false;
+        buttonList.add(new GuiButton(SCROLL_DOWN, centerX + 5, buttonY, 25, 20, "-"));
+        buttonList.add(scrollValueButton);
+        buttonList.add(new GuiButton(SCROLL_UP, centerX + 125, buttonY, 25, 20, "+"));
+    }
+
+    private static float adjustScrollMultiplier(int direction) {
+        float adjusted = Config.scrollAccelerationMultiplier + direction * 0.5F;
+        return Math.max(1.0F, Math.min(5.0F, adjusted));
+    }
+
+    private static String scrollAccelerationLabel() {
+        return "Enabled: " + (Config.scrollAccelerationEnabled ? "On" : "Off");
     }
 }

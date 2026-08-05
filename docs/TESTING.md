@@ -22,6 +22,10 @@ release; test the exact release JAR as well.
 5. Disconnect and reconnect the controller without restarting Minecraft.
 6. Connect a second controller, select each device in turn, and verify that only the selected device controls the game.
 7. Return selection to Automatic and verify that the first available device reconnects.
+8. Verify battery state appears in F3, Controller Setup & Test and the player inventory when the controller exposes
+   it. Repeat with a wired/unsupported device and confirm `Unavailable` causes no error.
+9. Select `Export Compatibility Report`, open the file under `controller-reports`, and verify the controller name,
+   SDL mapping, bindings, active GUI and mod version are present.
 
 ## Calibration and controller test
 
@@ -68,6 +72,9 @@ Open `Controller support -> Accessibility modes`.
   vanilla sprint once.
 - Verify that keyboard sprint and double-tap forward still work.
 - Open a menu with Toggle actions active and confirm that all latches clear.
+- Enable the Active-mode HUD and verify Sneak, Sprint, Swim, Modifier and radial-page state appear only while active.
+- Toggle Button Prompts and verify the bottom prompt bar hides and returns.
+- Enable Large Cursor and Cursor Trail separately and verify both remain aligned with item tooltips and clicks.
 
 ## Auto Jump and Swim
 
@@ -104,6 +111,9 @@ GUI Confirm can drag the map and both shoulder actions zoom it.
 - Hold the Precision Cursor action and verify the configured slowdown.
 - Scroll vanilla world/server lists and BetterQuesting.
 - In the Creative Search tab, enter enough results to require scrolling and verify both directions.
+- Enable Scroll Acceleration at 100%, 300% and 500%. Hold each scroll input long enough to verify the rate ramps up,
+  then release and confirm the next press starts at normal speed.
+- Disable Scroll Acceleration and verify the configured normal repeat interval remains constant.
 
 ## Bindings
 
@@ -122,13 +132,19 @@ GUI Confirm can drag the map and both shoulder actions zoom it.
 - Hover every red conflict marker and verify all conflicting core and mod actions are named.
 - Search the Gameplay and GUI binding pages by partial action name and verify binding still works after filtering.
 - Test two registered actions that share the same keyboard key; only the chosen action should activate.
+- Bind plain A to one action and LB+A to another. Verify A fires alone, LB+A fires only the chord action, and neither
+  binding is marked as an exact conflict.
+- Assign the same complete chord to two actions and verify both are named in the conflict tooltip.
+- Repeat chord capture with a trigger and an SDL-exposed paddle.
 
 ## Rumble
 
 - Verify `Controller Setup & Test -> Rumble Feedback` accurately reports SDL rumble support.
 - Press Test Rumble at 20%, 50% and 100% and confirm the difference is noticeable.
 - Disable the master switch and verify all feedback stops.
-- Test Damage, Explosions and Mining independently with only one effect enabled at a time.
+- Test Damage, Explosions, Mining, Fishing Bites and Low Health independently with only one effect enabled at a time.
+- Cast a fishing rod, wait for a bite and verify the bite pulse occurs near the player's bobber.
+- Reduce health to three hearts or less and verify a low-health pulse repeats without becoming continuous.
 - Trigger damage while mining and confirm the stronger damage effect is not immediately replaced by a mining pulse.
 - Test a controller without rumble and confirm all controller input still works without errors.
 

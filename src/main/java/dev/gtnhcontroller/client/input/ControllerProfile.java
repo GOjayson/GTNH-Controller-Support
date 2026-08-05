@@ -6,6 +6,9 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiContainer;
+
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
@@ -26,6 +29,10 @@ public final class ControllerProfile {
         ControllerAction.class);
     private final Map<ControllerAction, Boolean> previousStates = new EnumMap<ControllerAction, Boolean>(
         ControllerAction.class);
+    private List<ControllerBinding> gameplayPrimaryBindings = Collections.emptyList();
+    private List<ControllerBinding> gameplayModifierBindings = Collections.emptyList();
+    private List<ControllerBinding> guiPrimaryBindings = Collections.emptyList();
+    private List<ControllerBinding> guiModifierBindings = Collections.emptyList();
 
     public ControllerProfile(SdlGamepadManager gamepadManager) {
         this.gamepadManager = gamepadManager;
@@ -52,6 +59,8 @@ public final class ControllerProfile {
             .isDown(gamepadManager, Config.triggerThreshold);
         currentStates.put(ControllerAction.MODIFIER_LAYER, Boolean.valueOf(modifierDown));
 
+        Map<ControllerAction, ControllerBinding> activeBindings = new EnumMap<ControllerAction, ControllerBinding>(
+            ControllerAction.class);
         for (ControllerAction action : ControllerAction.values()) {
             if (action == ControllerAction.MODIFIER_LAYER) {
                 continue;
@@ -60,6 +69,23 @@ public final class ControllerProfile {
             ControllerBinding binding = bindingMap(layer).get(action);
             boolean down = connected && binding != null && binding.isDown(gamepadManager, Config.triggerThreshold);
             currentStates.put(action, Boolean.valueOf(down));
+            activeBindings.put(action, binding);
+        }
+
+        if (!connected) {
+            return;
+        }
+        for (ControllerAction action : ControllerAction.values()) {
+            if (action == ControllerAction.MODIFIER_LAYER || !isDown(action)) {
+                continue;
+            }
+            ControllerBinding binding = activeBindings.get(action);
+            if (binding != null && binding.isSupersededBy(
+                precedenceCandidates(action.guiAction, modifierDown),
+                gamepadManager,
+                Config.triggerThreshold)) {
+                currentStates.put(action, Boolean.FALSE);
+            }
         }
     }
 
@@ -120,6 +146,28 @@ public final class ControllerProfile {
         return isDown(ControllerAction.MODIFIER_LAYER);
     }
 
+    /**
+     * Supplies registered Minecraft/mod bindings so chord precedence is resolved across both binding screens.
+     */
+    public void setSupplementalBindings(List<ControllerBinding> gameplayPrimary,
+        List<ControllerBinding> gameplayModifier, List<ControllerBinding> guiPrimary,
+        List<ControllerBinding> guiModifier) {
+        gameplayPrimaryBindings = immutableCopy(gameplayPrimary);
+        gameplayModifierBindings = immutableCopy(gameplayModifier);
+        guiPrimaryBindings = immutableCopy(guiPrimary);
+        guiModifierBindings = immutableCopy(guiModifier);
+    }
+
+    public boolean isBindingSuperseded(ControllerBinding binding, boolean guiContext) {
+        if (binding == null || gamepadManager == null) {
+            return false;
+        }
+        return binding.isSupersededBy(
+            precedenceCandidates(guiContext, isModifierActive()),
+            gamepadManager,
+            Config.triggerThreshold);
+    }
+
     public List<ControllerAction> getConflictingActions(ControllerAction subjectAction,
         ControllerBindingLayer displayedLayer) {
         ControllerBinding subject = bindingMap(displayedLayer).get(subjectAction);
@@ -170,5 +218,31 @@ public final class ControllerProfile {
 
     private Map<ControllerAction, ControllerBinding> bindingMap(ControllerBindingLayer layer) {
         return layer == ControllerBindingLayer.MODIFIER ? modifierBindings : primaryBindings;
+    }
+
+    private List<ControllerBinding> precedenceCandidates(boolean guiContext, boolean modifierDown) {
+        List<ControllerBinding> candidates = new ArrayList<ControllerBinding>();
+        for (ControllerAction candidateAction : ControllerAction.values()) {
+            if (candidateAction == ControllerAction.MODIFIER_LAYER || candidateAction.guiAction != guiContext) {
+                continue;
+            }
+            ControllerBindingLayer layer = ControllerBindingLayer.select(modifierDown, candidateAction);
+            ControllerBinding candidate = bindingMap(layer).get(candidateAction);
+            if (candidate != null && !candidate.isEmpty()) {
+                candidates.add(candidate);
+            }
+        }
+        if (guiContext) {
+            if (Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
+                candidates.addAll(modifierDown ? guiModifierBindings : guiPrimaryBindings);
+            }
+        } else {
+            candidates.addAll(modifierDown ? gameplayModifierBindings : gameplayPrimaryBindings);
+        }
+        return candidates;
+    }
+
+    private static List<ControllerBinding> immutableCopy(List<ControllerBinding> bindings) {
+        return Collections.unmodifiableList(new ArrayList<ControllerBinding>(bindings));
     }
 }

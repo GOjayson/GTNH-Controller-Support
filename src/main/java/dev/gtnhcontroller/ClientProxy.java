@@ -4,6 +4,7 @@ import net.minecraftforge.common.MinecraftForge;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import dev.gtnhcontroller.client.ControllerActiveModeOverlay;
 import dev.gtnhcontroller.client.ControllerDebugOverlay;
 import dev.gtnhcontroller.client.gui.ControllerControlsEntry;
 import dev.gtnhcontroller.client.gui.GuiController;
@@ -57,6 +58,8 @@ public final class ClientProxy extends CommonProxy {
             .bus()
             .register(rumbleController);
         MinecraftForge.EVENT_BUS.register(new ControllerDebugOverlay(gamepadManager));
+        MinecraftForge.EVENT_BUS
+            .register(new ControllerActiveModeOverlay(gamepadManager, controllerProfile, gameplayController));
         MinecraftForge.EVENT_BUS.register(guiController);
         MinecraftForge.EVENT_BUS.register(rumbleController);
         MinecraftForge.EVENT_BUS

@@ -1,10 +1,14 @@
 package dev.gtnhcontroller.client.gui;
 
+import java.io.File;
+import java.io.IOException;
+
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 
 import org.lwjgl.input.Keyboard;
 
+import dev.gtnhcontroller.client.input.ControllerDiagnosticsExporter;
 import dev.gtnhcontroller.client.input.ControllerProfile;
 import dev.gtnhcontroller.client.input.ModKeyBindingController;
 import dev.gtnhcontroller.client.input.SdlGamepadManager;
@@ -16,12 +20,14 @@ public final class GuiControllerDeviceScreen extends GuiScreen implements Contro
     private static final int TEST_INPUTS = 3;
     private static final int RUMBLE = 4;
     private static final int PROFILES = 5;
+    private static final int EXPORT_DIAGNOSTICS = 6;
     private static final int DONE = 200;
 
     private final GuiScreen parentScreen;
     private final SdlGamepadManager gamepadManager;
     private final ControllerProfile controllerProfile;
     private final ModKeyBindingController modKeyBindingController;
+    private String exportStatus = "";
 
     public GuiControllerDeviceScreen(GuiScreen parentScreen, SdlGamepadManager gamepadManager,
         ControllerProfile controllerProfile, ModKeyBindingController modKeyBindingController) {
@@ -35,11 +41,12 @@ public final class GuiControllerDeviceScreen extends GuiScreen implements Contro
     public void initGui() {
         buttonList.clear();
         int centerX = width / 2;
-        buttonList.add(new GuiButton(SELECT_CONTROLLER, centerX - 100, 54, 200, 20, "Select Controller"));
-        buttonList.add(new GuiButton(CALIBRATION, centerX - 100, 78, 200, 20, "Calibration Wizard"));
-        buttonList.add(new GuiButton(TEST_INPUTS, centerX - 100, 102, 200, 20, "Test Controller Inputs"));
-        buttonList.add(new GuiButton(RUMBLE, centerX - 100, 126, 200, 20, "Rumble Feedback"));
-        buttonList.add(new GuiButton(PROFILES, centerX - 100, 150, 200, 20, "Profile Import & Export"));
+        buttonList.add(new GuiButton(SELECT_CONTROLLER, centerX - 100, 52, 200, 20, "Select Controller"));
+        buttonList.add(new GuiButton(CALIBRATION, centerX - 100, 76, 200, 20, "Calibration Wizard"));
+        buttonList.add(new GuiButton(TEST_INPUTS, centerX - 100, 100, 200, 20, "Test Controller Inputs"));
+        buttonList.add(new GuiButton(RUMBLE, centerX - 100, 124, 200, 20, "Rumble Feedback"));
+        buttonList.add(new GuiButton(PROFILES, centerX - 100, 148, 200, 20, "Profile Import & Export"));
+        buttonList.add(new GuiButton(EXPORT_DIAGNOSTICS, centerX - 100, 172, 200, 20, "Export Compatibility Report"));
         buttonList.add(new GuiButton(DONE, centerX - 100, height - 28, 200, 20, "Done"));
     }
 
@@ -60,6 +67,14 @@ public final class GuiControllerDeviceScreen extends GuiScreen implements Contro
                 break;
             case PROFILES:
                 mc.displayGuiScreen(new GuiControllerProfileScreen(this, controllerProfile, modKeyBindingController));
+                break;
+            case EXPORT_DIAGNOSTICS:
+                try {
+                    File report = ControllerDiagnosticsExporter.export(mc, gamepadManager, modKeyBindingController);
+                    exportStatus = "Saved: " + report.getName();
+                } catch (IOException exception) {
+                    exportStatus = "Export failed: " + exception.getMessage();
+                }
                 break;
             case DONE:
                 mc.displayGuiScreen(parentScreen);
@@ -83,6 +98,16 @@ public final class GuiControllerDeviceScreen extends GuiScreen implements Contro
         drawDefaultBackground();
         drawCenteredString(fontRendererObj, "Controller Setup & Test", width / 2, 16, 0xFFFFFF);
         drawCenteredString(fontRendererObj, gamepadManager.getStatusLine(), width / 2, 32, 0xA0A0A0);
+        drawCenteredString(
+            fontRendererObj,
+            "Battery: " + gamepadManager.getBatteryStatus()
+                .getDisplayText(),
+            width / 2,
+            42,
+            0xA0A0A0);
+        if (!exportStatus.isEmpty()) {
+            drawCenteredString(fontRendererObj, exportStatus, width / 2, 196, 0x80FF80);
+        }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 }

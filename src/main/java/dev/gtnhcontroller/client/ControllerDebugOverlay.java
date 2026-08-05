@@ -23,6 +23,9 @@ public final class ControllerDebugOverlay {
 
         event.left.add("[GTNH Controller] " + gamepadManager.getStatusLine());
         if (gamepadManager.isConnected()) {
+            event.left.add(
+                "Battery: " + gamepadManager.getBatteryStatus()
+                    .getDisplayText());
             event.left.add("Axes: " + gamepadManager.getAxisLine());
             event.left.add("Buttons: " + gamepadManager.getButtonsLine());
         }

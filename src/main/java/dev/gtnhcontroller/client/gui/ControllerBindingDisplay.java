@@ -13,14 +13,20 @@ final class ControllerBindingDisplay {
 
         StringBuilder display = new StringBuilder();
         String[] alternatives = bindingSpecification.split("\\|");
-        for (String alternative : alternatives) {
-            if (display.length() > 0) {
+        for (int alternativeIndex = 0; alternativeIndex < alternatives.length; alternativeIndex++) {
+            if (alternativeIndex > 0) {
                 display.append(" / ");
             }
 
-            String[] parts = alternative.trim()
-                .split(":", 2);
-            display.append(parts.length == 2 ? formatInputName(parts[1]) : alternative);
+            String[] chordInputs = alternatives[alternativeIndex].split("\\+");
+            for (int inputIndex = 0; inputIndex < chordInputs.length; inputIndex++) {
+                if (inputIndex > 0) {
+                    display.append(" + ");
+                }
+                String[] parts = chordInputs[inputIndex].trim()
+                    .split(":", 2);
+                display.append(parts.length == 2 ? formatInputName(parts[1]) : chordInputs[inputIndex]);
+            }
         }
         return display.toString();
     }

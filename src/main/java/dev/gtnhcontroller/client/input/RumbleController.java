@@ -20,6 +20,8 @@ import dev.gtnhcontroller.mixins.KeyBindingControllerAccessor;
 public final class RumbleController {
 
     private static final int MINING_PULSE_INTERVAL_TICKS = 5;
+    private static final int LOW_HEALTH_PULSE_INTERVAL_TICKS = 100;
+    private static final float LOW_HEALTH_THRESHOLD = 6.0F;
 
     private final SdlGamepadManager gamepadManager;
 
@@ -27,6 +29,7 @@ public final class RumbleController {
     private float previousHealth;
     private int previousHurtTime;
     private int miningPulseTicks;
+    private int lowHealthPulseTicks;
 
     public RumbleController(SdlGamepadManager gamepadManager) {
         this.gamepadManager = gamepadManager;
@@ -45,6 +48,7 @@ public final class RumbleController {
             previousHealth = player == null ? 0.0F : player.getHealth();
             previousHurtTime = player == null ? 0 : player.hurtTime;
             miningPulseTicks = 0;
+            lowHealthPulseTicks = 0;
             return;
         }
         if (player == null) {
@@ -52,6 +56,7 @@ public final class RumbleController {
         }
 
         detectDamage(player);
+        updateLowHealth(player);
         updateMining(minecraft);
         previousHealth = player.getHealth();
         previousHurtTime = player.hurtTime;
@@ -59,20 +64,29 @@ public final class RumbleController {
 
     @SubscribeEvent
     public void onSoundPlayed(PlaySoundEvent17 event) {
-        if (!Config.rumbleEnabled || !Config.rumbleExplosions || event.name == null || event.result == null) {
+        if (!Config.rumbleEnabled || event.name == null || event.result == null) {
             return;
         }
 
         String soundName = event.name.toLowerCase(Locale.ROOT);
-        if (!soundName.contains("explode") && !soundName.contains("explosion")) {
-            return;
-        }
-
         Minecraft minecraft = Minecraft.getMinecraft();
         if (minecraft.thePlayer == null) {
             return;
         }
         ISound sound = event.result;
+        if ((soundName.contains("explode") || soundName.contains("explosion")) && Config.rumbleExplosions) {
+            rumbleExplosion(minecraft, sound);
+        }
+        if (soundName.contains("splash") && Config.rumbleFishing
+            && minecraft.thePlayer.fishEntity != null
+            && minecraft.thePlayer.fishEntity.getDistanceSq(sound.getXPosF(), sound.getYPosF(), sound.getZPosF())
+                <= 36.0D) {
+            float intensity = Config.rumbleIntensity;
+            gamepadManager.playRumble(0.25F * intensity, 0.65F * intensity, 220, RumbleEffect.FISHING);
+        }
+    }
+
+    private void rumbleExplosion(Minecraft minecraft, ISound sound) {
         double distance = Math
             .sqrt(minecraft.thePlayer.getDistanceSq(sound.getXPosF(), sound.getYPosF(), sound.getZPosF()));
         if (distance > 64.0D) {
@@ -81,6 +95,24 @@ public final class RumbleController {
         float distanceScale = (float) Math.max(0.25D, 1.0D - distance / 64.0D);
         float intensity = Config.rumbleIntensity * distanceScale;
         gamepadManager.playRumble(0.90F * intensity, 0.55F * intensity, 500, RumbleEffect.EXPLOSION);
+    }
+
+    private void updateLowHealth(EntityClientPlayerMP player) {
+        if (player.getHealth() <= 0.0F || player.getHealth() > LOW_HEALTH_THRESHOLD) {
+            lowHealthPulseTicks = 0;
+            return;
+        }
+        if (!Config.rumbleEnabled || !Config.rumbleLowHealth) {
+            return;
+        }
+        boolean crossedThreshold = previousHealth > LOW_HEALTH_THRESHOLD;
+        if (crossedThreshold || lowHealthPulseTicks <= 0) {
+            float intensity = Config.rumbleIntensity;
+            gamepadManager.playRumble(0.35F * intensity, 0.12F * intensity, 180, RumbleEffect.LOW_HEALTH);
+            lowHealthPulseTicks = LOW_HEALTH_PULSE_INTERVAL_TICKS;
+        } else {
+            lowHealthPulseTicks--;
+        }
     }
 
     private void detectDamage(EntityClientPlayerMP player) {

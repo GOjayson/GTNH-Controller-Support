@@ -27,12 +27,18 @@ Separating contexts prevents a button such as Xbox B from triggering Sneak and G
 then read either the Primary or Modifier map for that tick. GUI actions intentionally remain on the Primary map so a
 gameplay modifier cannot silently replace menu Confirm or Back.
 
+Bindings are alternatives of input chords: `+` joins simultaneous inputs and `|` separates alternatives. The
+profile compares active chords across core and registered bindings before dispatch. A strict superset such as
+`LB+A` suppresses plain `A` for that tick, while identical complete chords remain a reported conflict.
+
 Controller selection stores the SDL gamepad name plus its occurrence among identical names. `AUTO` retains the
 original first-available behavior. Instance IDs are used only during the running session because SDL can assign new
 ones after reconnection.
 
-`SdlGamepadManager` also owns SDL capability queries and prioritized rumble dispatch. Rumble callers never access the
-native gamepad handle directly, and lower-priority mining pulses cannot cancel an active damage or explosion effect.
+`SdlGamepadManager` also owns SDL capability, mapping, battery and prioritized rumble dispatch. Optional SDL 3.2
+battery/mapping methods are discovered defensively so missing Java bindings cannot prevent startup. Rumble callers
+never access the native gamepad handle directly, and lower-priority mining/low-health pulses cannot cancel stronger
+effects.
 
 `ControllerCalibration` is a Minecraft-independent sample accumulator. The calibration GUI owns timing and user
 confirmation while the model owns drift/range measurement and bounded suggestions.
@@ -57,6 +63,9 @@ rendering and mouse callbacks, then mirrors it to the native cursor for older mo
 directly.
 
 Physical mouse movement immediately returns ownership to the mouse.
+
+Prompt formatting reads the live configured GUI bindings instead of assuming Xbox defaults. Large-cursor and trail
+rendering are layered onto the controller-owned cursor only and do not change the native hover coordinate.
 
 ## Compatibility adapters
 

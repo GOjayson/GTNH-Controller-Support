@@ -8,15 +8,15 @@ The full configuration file is `config\gtnhcontroller.cfg`. Start the game once 
 
 The main screen contains:
 
-- **Controller Setup & Test:** opens controller selection, calibration, live input testing, rumble configuration and
-  profile import/export.
+- **Controller Setup & Test:** opens controller selection, calibration, live input testing, rumble configuration,
+  profile import/export and compatibility-report export.
 - **Gameplay Controls:** enables or disables in-world controller input.
 - **GUI Controls:** enables or disables controller input in menus.
 - **Auto Jump:** automatically jumps over a one-block rise when there is enough clearance.
 - **Gameplay Bindings:** searches and edits the core in-world actions.
 - **Accessibility modes:** edits accessibility activation behavior.
 - **GUI Bindings:** searches and edits cursor, click, navigation and scrolling actions.
-- **Sensitivity:** edits movement response, camera sensitivity and cursor sensitivity.
+- **Sensitivity:** edits movement response, camera/cursor sensitivity and scroll acceleration.
 - **Deadzones:** separately edits movement, camera, cursor and trigger deadzones.
 - **Axis Inversion:** independently inverts camera X/Y and GUI cursor X/Y.
 - **Navigation:** edits directional target types, repeat timing and precision-cursor speed.
@@ -56,12 +56,20 @@ every standardized SDL button. A gray button is not exposed by the controller's 
 especially useful for rear paddles. Hold the configured GUI Back input for three seconds to leave the capture-only
 test screen.
 
+`Export Compatibility Report` writes a timestamped text file to `controller-reports` in the Minecraft instance. It
+contains the controller name, SDL mapping and capabilities, battery/rumble status, active GUI, live inputs, mod
+version and configured core/mod bindings. Review the report before posting it publicly, particularly custom binding
+identifiers and chat-related actions.
+
+Battery state appears on this screen, F3 and inventory screens when SDL and the controller driver report it. An
+`Unavailable` value is normal for wired controllers and some wireless APIs.
+
 ## Rumble
 
 `Controller Setup & Test -> Rumble Feedback` contains:
 
 - a master rumble switch;
-- independent Damage, Explosions and Mining switches;
+- independent Damage, Explosions, Mining, Fishing Bites and Low Health switches;
 - a global 0–100% intensity;
 - a Test Rumble button.
 
@@ -84,12 +92,18 @@ Sneak, Sprint, Attack and Use support:
 Latched actions reset whenever a menu opens, focus is lost, gameplay controls are disabled or the controller
 disconnects.
 
+The same menu controls context-sensitive button prompts, the active-mode HUD, large high-contrast cursor and cursor
+trail. The HUD only draws a line while one of the tracked modes is active.
+
 ## Sensitivity
 
 Movement response, camera sensitivity and cursor sensitivity can be adjusted from 25% to 500%.
 
 Movement Response shapes partial-stick input without reducing the maximum speed reached at full stick deflection.
 Lower values provide finer low-speed control; higher values react more aggressively.
+
+Scroll Acceleration can be disabled or set from 100% to 500%. It preserves the initial repeat delay, then gradually
+shortens the interval while Scroll Up or Scroll Down remains held.
 
 ## Minecraft and mod bindings
 
@@ -104,6 +118,10 @@ Both Gameplay Bindings and Minecraft & Mod Bindings have Primary and Modifier la
 `Modifier Layer` action on the Primary gameplay page, then switch either editor to `Layer: Modifier` and add the
 alternate mappings. The modifier is active only while held and defaults to `NONE`, so upgrading does not replace any
 existing controls.
+
+Every binding can also be a simultaneous chord. Hold all desired inputs and release the complete combination while
+capturing. A more-specific active chord suppresses its component binding, so a plain `A` action does not also fire
+when `LB+A` is assigned elsewhere.
 
 Mods that read raw LWJGL keyboard state instead of registered keybindings may require dedicated compatibility code.
 
@@ -155,6 +173,13 @@ multi-command scripting.
 - `swim`: `HOLD` or `TOGGLE`.
 - `sneak`, `sprint`, `attack`, `use`: `HOLD`, `TOGGLE` or `PRESS`.
 
+### Accessibility
+
+- `showControllerPrompts`: show custom-binding-aware prompts on GUI screens.
+- `showActiveModeHud`: show active Sneak, Sprint, Swim, modifier and radial-page state.
+- `largeCursor`: use a larger high-contrast controller cursor.
+- `cursorTrail`: draw a short trail behind the controller cursor.
+
 ### GUI
 
 - `enableGuiControls`: enable controller input in menus.
@@ -180,6 +205,8 @@ multi-command scripting.
 - `precisionCursorScale`: cursor-speed multiplier while Precision is held.
 - `navigationInitialDelayMillis`: delay before held navigation begins repeating.
 - `navigationRepeatIntervalMillis`: interval between repeated navigation or scrolling actions.
+- `scrollAccelerationEnabled`: accelerate held GUI scrolling.
+- `scrollAccelerationMultiplier`: maximum scroll rate from `1.0` to `5.0` times normal.
 
 ### Rumble
 
@@ -187,6 +214,8 @@ multi-command scripting.
 - `damage`: damage feedback.
 - `explosions`: nearby explosion feedback.
 - `mining`: periodic block-mining feedback.
+- `fishing`: fishing-bite feedback near the player's bobber.
+- `lowHealth`: periodic feedback at three hearts or less.
 - `intensity`: global effect multiplier from `0.0` to `1.0`.
 
 ### Radial menu and chat macros
@@ -203,10 +232,12 @@ Manual bindings accept:
 BUTTON:SOUTH
 TRIGGER:RIGHT_TRIGGER
 BUTTON:LEFT_SHOULDER|BUTTON:DPAD_LEFT
+BUTTON:LEFT_SHOULDER+BUTTON:SOUTH
 NONE
 ```
 
-The `|` character means either input. Names are case-insensitive.
+The `+` character means every input in that chord must be held simultaneously. The `|` character separates
+alternatives. Names are case-insensitive.
 
 Standard button names include `SOUTH`, `EAST`, `WEST`, `NORTH`, `BACK`, `GUIDE`, `START`, both stick clicks, both
 shoulders, all D-pad directions, `TOUCHPAD`, `MISC1` through `MISC6`, and the four paddle names. Trigger names are

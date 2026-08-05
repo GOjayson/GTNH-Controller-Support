@@ -75,6 +75,18 @@ public final class GameplayController {
         }
     }
 
+    public boolean isSneakActive() {
+        return sneakHeld;
+    }
+
+    public boolean isSprintActive() {
+        return sprintHeld;
+    }
+
+    public boolean isSwimActive() {
+        return autoSwimUp;
+    }
+
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {

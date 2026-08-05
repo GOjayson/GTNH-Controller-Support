@@ -65,10 +65,18 @@ public final class Config {
     public static float precisionCursorScale = 0.30F;
     public static int navigationInitialDelayMillis = 350;
     public static int navigationRepeatIntervalMillis = 100;
+    public static boolean scrollAccelerationEnabled = true;
+    public static float scrollAccelerationMultiplier = 3.0F;
+    public static boolean showControllerPrompts = true;
+    public static boolean showActiveModeHud = true;
+    public static boolean largeCursor = false;
+    public static boolean cursorTrail = false;
     public static boolean rumbleEnabled = true;
     public static boolean rumbleDamage = true;
     public static boolean rumbleExplosions = true;
     public static boolean rumbleMining = true;
+    public static boolean rumbleFishing = true;
+    public static boolean rumbleLowHealth = true;
     public static float rumbleIntensity = 1.0F;
     public static RadialMenuActivationMode radialMenuActivationMode = RadialMenuActivationMode.HOLD;
 
@@ -335,6 +343,38 @@ public final class Config {
             50,
             500,
             "Delay between repeated GUI navigation or scroll actions.");
+        scrollAccelerationEnabled = configuration.getBoolean(
+            "scrollAccelerationEnabled",
+            "guiNavigation",
+            scrollAccelerationEnabled,
+            "Accelerate GUI scrolling while its configured controller input remains held.");
+        scrollAccelerationMultiplier = configuration.getFloat(
+            "scrollAccelerationMultiplier",
+            "guiNavigation",
+            scrollAccelerationMultiplier,
+            1.0F,
+            5.0F,
+            "Maximum held-scroll speed relative to normal GUI scrolling.");
+        showControllerPrompts = configuration.getBoolean(
+            "showControllerPrompts",
+            "accessibility",
+            showControllerPrompts,
+            "Show context-sensitive controller button prompts along the bottom of GUI screens.");
+        showActiveModeHud = configuration.getBoolean(
+            "showActiveModeHud",
+            "accessibility",
+            showActiveModeHud,
+            "Show latched accessibility modes, the modifier layer, and radial page on the HUD.");
+        largeCursor = configuration.getBoolean(
+            "largeCursor",
+            "accessibility",
+            largeCursor,
+            "Use a larger high-contrast controller-owned GUI cursor.");
+        cursorTrail = configuration.getBoolean(
+            "cursorTrail",
+            "accessibility",
+            cursorTrail,
+            "Draw a short high-contrast trail behind the controller-owned GUI cursor.");
         rumbleEnabled = configuration.getBoolean(
             "enabled",
             "rumble",
@@ -346,6 +386,13 @@ public final class Config {
             .getBoolean("explosions", "rumble", rumbleExplosions, "Rumble for nearby explosion sounds.");
         rumbleMining = configuration
             .getBoolean("mining", "rumble", rumbleMining, "Provide light periodic feedback while mining a block.");
+        rumbleFishing = configuration
+            .getBoolean("fishing", "rumble", rumbleFishing, "Rumble when a fishing bite splashes near the bobber.");
+        rumbleLowHealth = configuration.getBoolean(
+            "lowHealth",
+            "rumble",
+            rumbleLowHealth,
+            "Pulse periodically while the player has three hearts or less.");
         rumbleIntensity = configuration.getFloat(
             "intensity",
             "rumble",
@@ -747,6 +794,10 @@ public final class Config {
         sprintActivationMode = ActivationMode.HOLD;
         attackActivationMode = ActivationMode.HOLD;
         useActivationMode = ActivationMode.HOLD;
+        showControllerPrompts = true;
+        showActiveModeHud = true;
+        largeCursor = false;
+        cursorTrail = false;
         saveControllerSettings();
     }
 
@@ -810,6 +861,18 @@ public final class Config {
             .set(navigationInitialDelayMillis);
         configuration.get("guiNavigation", "navigationRepeatIntervalMillis", navigationRepeatIntervalMillis)
             .set(navigationRepeatIntervalMillis);
+        configuration.get("guiNavigation", "scrollAccelerationEnabled", scrollAccelerationEnabled)
+            .set(scrollAccelerationEnabled);
+        configuration.get("guiNavigation", "scrollAccelerationMultiplier", scrollAccelerationMultiplier)
+            .set(scrollAccelerationMultiplier);
+        configuration.get("accessibility", "showControllerPrompts", showControllerPrompts)
+            .set(showControllerPrompts);
+        configuration.get("accessibility", "showActiveModeHud", showActiveModeHud)
+            .set(showActiveModeHud);
+        configuration.get("accessibility", "largeCursor", largeCursor)
+            .set(largeCursor);
+        configuration.get("accessibility", "cursorTrail", cursorTrail)
+            .set(cursorTrail);
         configuration.get("rumble", "enabled", rumbleEnabled)
             .set(rumbleEnabled);
         configuration.get("rumble", "damage", rumbleDamage)
@@ -818,6 +881,10 @@ public final class Config {
             .set(rumbleExplosions);
         configuration.get("rumble", "mining", rumbleMining)
             .set(rumbleMining);
+        configuration.get("rumble", "fishing", rumbleFishing)
+            .set(rumbleFishing);
+        configuration.get("rumble", "lowHealth", rumbleLowHealth)
+            .set(rumbleLowHealth);
         configuration.get("rumble", "intensity", rumbleIntensity)
             .set(rumbleIntensity);
         configuration.get("radialMenu", "activationMode", radialMenuActivationMode.name())
@@ -859,7 +926,8 @@ public final class Config {
             name,
             category,
             defaultValue,
-            actionDescription + " Use BUTTON:<name>, TRIGGER:<name>, alternatives separated by |, or NONE.");
+            actionDescription
+                + " Use BUTTON:<name> or TRIGGER:<name>; + joins a chord, | separates alternatives, and NONE unbinds.");
     }
 
     private static ActivationMode getActivationMode(Configuration configuration, String name,

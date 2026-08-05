@@ -40,6 +40,7 @@ YouTube video.
 - Controller-driven cursor for menus, inventories, machine interfaces and BetterQuesting.
 - Controller panning and zooming for JourneyMap and Galacticraft's celestial map.
 - Rebindable gameplay and GUI actions, including SDL-exposed triggers, paddles and miscellaneous buttons.
+- Multi-button chords such as `LB+A`, with custom-binding-aware controller prompts in menus.
 - Primary and hold-modifier binding layers for core, Minecraft and mod actions.
 - Searchable core, Minecraft and mod bindings with exact conflict details.
 - Separate NEI key bindings appear alongside Minecraft and mod actions, including legacy GTNH NEI builds.
@@ -47,11 +48,13 @@ YouTube video.
 - Selectable Hold or Toggle radial-menu opening behavior.
 - Editable one-shot chat and command macros assignable to radial slots.
 - In-game controller profile import/export for backups and sharing.
-- Directional GUI navigation, scrolling and a precision-cursor mode.
+- Directional GUI navigation, configurable scroll acceleration and a precision-cursor mode.
 - On-screen keyboard for focused vanilla, Creative inventory and NEI text fields.
 - Optional Auto Jump and Hold/Toggle swimming assistance.
 - Hold, Toggle and Press activation modes for Sneak, Sprint, Attack and Use.
-- Optional configurable rumble for damage, explosions and mining on supported controllers.
+- Optional active-mode HUD, large high-contrast cursor and cursor trail.
+- Optional configurable rumble for damage, explosions, mining, fishing bites and low health.
+- Battery display and an exportable SDL/controller compatibility report when supported by the driver.
 - Safe hand-off between controller, mouse and keyboard.
 - Live controller diagnostics on the F3 debug screen.
 
@@ -85,6 +88,9 @@ buttons. Some controllers make rear buttons duplicate ordinary buttons, which so
 
 Rumble is also hardware and driver dependent. The setup screen reports whether SDL says the selected controller
 supports it; unsupported controllers continue to work without haptics.
+
+Battery reporting is optional. Wireless controllers may show a percentage and charging state, while many wired,
+XInput and remapped devices report no battery information. This never affects input.
 
 For the first test, use USB and disable Steam Input, DS4Windows, JoyToKey and similar remapping software. A second
 mapper can cause every controller action to fire twice.
@@ -131,6 +137,10 @@ under Gameplay Bindings. Configure Modifier Layer there, then
 use the `Layer: Primary/Modifier` button in either binding editor to assign a second set of actions. LT, RT and
 independently exposed rear paddles can all be used as the modifier.
 
+To create a chord, select a binding, hold every required input together, then release the full combination. For
+example, holding LB and A records `LB+A`. A larger active chord takes precedence over a plain component binding, so
+`A` and `LB+A` can perform different actions.
+
 Additional Minecraft and mod actions can be assigned under `Controller support -> Minecraft & Mod Bindings` or placed
 on any of the three radial pages. Hold LB or RB while the radial menu is open to access the two extra pages. Radial
 Menu settings also provide Hold and Toggle opening modes plus editable one-shot chat macros such as `/tpa accept` or
@@ -152,6 +162,8 @@ Open `Controller support -> Accessibility modes` to configure:
 Swim supports Hold and Toggle. Sneak, Sprint, Attack and Use support all three modes. Latched actions clear when a
 menu opens, focus is lost, gameplay controls are disabled or the controller disconnects.
 
+The same screen can enable controller prompts, the active-mode HUD, a large cursor and a cursor trail.
+
 ## Known limitations
 
 - Imported profiles are manual global snapshots; automatic per-device profile switching and merged adaptive-controller
@@ -159,6 +171,8 @@ menu opens, focus is lost, gameplay controls are disabled or the controller disc
 - Calibration recommends one value per physical stick; movement and cursor can still be adjusted separately afterward.
 - Custom text widgets and mod GUIs that bypass Minecraft's normal input APIs may still need dedicated compatibility
   code.
+- Controller battery percentages depend on SDL, the connection type and the operating-system driver and may be
+  unavailable or approximate.
 
 Please report compatibility problems through
 [GitHub Issues](https://github.com/GOjayson/GTNH-Controller-Support/issues) and include the controller model, exact GTNH

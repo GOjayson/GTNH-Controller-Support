@@ -2,6 +2,34 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.4.0
+
+### Added
+
+- Added context-sensitive controller prompts for Select, Back, Quick Move and the on-screen keyboard. Prompt labels
+  follow custom bindings and support chords.
+- Added simultaneous multi-button chords such as `LB+A` to core, Minecraft/mod and NEI bindings, with the most
+  specific active chord taking precedence over its component buttons.
+- Added a compatibility-report export containing the mod version, active GUI, controller name, SDL mapping,
+  capabilities, battery state, live values and configured bindings.
+- Added optional fishing-bite and low-health rumble, each with its own in-game switch.
+- Added controller battery status to inventory screens, Controller Setup & Test and the F3 diagnostics when SDL and
+  the controller driver expose it.
+- Added an optional active-mode HUD for Sneak, Sprint, Swim, the modifier layer and the current radial page.
+- Added optional large high-contrast cursor and cursor-trail modes.
+- Added configurable held-scroll acceleration from 100% to 500%.
+
+### Changed
+
+- Binding capture now waits for the complete held combination to be released instead of accepting the first button.
+- Binding conflict warnings compare complete chords, so `A` and `LB+A` can be assigned safely while duplicate chords
+  are still reported.
+
+### Compatibility
+
+- Battery and SDL mapping queries are optional at runtime. Older SDL bindings, wired controllers and drivers that do
+  not report battery data continue to work and display `Unavailable`.
+
 ## 1.3.3
 
 ### Added

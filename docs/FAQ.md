@@ -21,6 +21,18 @@ ordinary face button. Software cannot separate two inputs when the controller re
 Check the pressed-button line under F3. If both physical buttons show the same SDL name, change the controller's
 firmware mode or mapping.
 
+## Controller battery says `Unavailable`
+
+Battery reporting depends on SDL, the controller connection and the operating-system driver. It is common for wired
+controllers, XInput wrappers and remapping tools to expose input without battery information. Try the controller's
+native wireless mode with other remappers disabled. Input and rumble continue to work when battery data is absent.
+
+## How do I create a multi-button binding?
+
+Select the binding, hold every required button or trigger together, then release the entire combination. The screen
+shows the accumulating chord before saving it. A chord such as `LB+A` takes precedence over plain `A` while both are
+held.
+
 ## The cursor moves while untouched
 
 Increase `cursorDeadZone` gradually, for example from `0.15` to `0.20`. Do not hide severe hardware drift with an
@@ -42,6 +54,9 @@ Some custom screens bypass Minecraft's mouse callback path. Record:
 - the relevant `latest.log`.
 
 That screen may need a narrow compatibility adapter.
+
+Use `Controller Setup & Test -> Export Compatibility Report` and attach the generated text file when opening an
+issue. It records the active GUI class and SDL/controller details needed to identify the missing adapter.
 
 ## Scrolling fails in one screen
 
