@@ -46,6 +46,7 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
 
     private int selectedSlot = -1;
     private int latchedDPadSlot = -1;
+    private int latchedToggleSlot = -1;
     private RadialMenuPage radialPage = RadialMenuPage.BASE;
     private boolean finished;
     private boolean radialInputReleased;
@@ -71,6 +72,7 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
         if (requestedPage != radialPage) {
             radialPage = requestedPage;
             latchedDPadSlot = -1;
+            latchedToggleSlot = -1;
             loadEntries();
         }
         int stickSelection = RadialMenuSelection
@@ -81,7 +83,16 @@ public final class GuiRadialMenuScreen extends GuiScreen implements ControllerIn
             gamepadManager.isButtonDown(DPAD_LEFT),
             gamepadManager.isButtonDown(DPAD_RIGHT));
         latchedDPadSlot = RadialMenuSelection.updateDPadLatch(latchedDPadSlot, dPadSelection);
-        selectedSlot = dPadSelection >= 0 ? dPadSelection : stickSelection >= 0 ? stickSelection : latchedDPadSlot;
+        boolean toggleMode = Config.radialMenuActivationMode == RadialMenuActivationMode.TOGGLE;
+        latchedToggleSlot = RadialMenuSelection
+            .updateToggleLatch(latchedToggleSlot, stickSelection, dPadSelection, toggleMode);
+        if (dPadSelection >= 0) {
+            selectedSlot = dPadSelection;
+        } else if (stickSelection >= 0) {
+            selectedSlot = stickSelection;
+        } else {
+            selectedSlot = toggleMode ? latchedToggleSlot : latchedDPadSlot;
+        }
         if (controllerProfile.wasPressed(GUI_BACK)) {
             finish(false);
             return;

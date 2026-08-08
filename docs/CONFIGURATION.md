@@ -18,7 +18,8 @@ The main screen contains:
 - **GUI Bindings:** searches and edits cursor, click, navigation and scrolling actions.
 - **Sensitivity:** edits movement response, camera/cursor sensitivity and scroll acceleration.
 - **Deadzones:** separately edits movement, camera, cursor and trigger deadzones.
-- **Axis Inversion:** independently inverts camera X/Y and GUI cursor X/Y.
+- **Axes & Cursor Stick:** selects the left or right stick for the GUI cursor and independently inverts camera X/Y
+  and GUI cursor X/Y.
 - **Navigation:** edits directional target types, repeat timing and precision-cursor speed.
 - **Minecraft & Mod Bindings:** maps controller inputs to registered Minecraft and mod keybindings.
 - **Radial Menu:** assigns up to 24 registered actions or chat macros across Base, Hold LB and Hold RB pages and
@@ -130,8 +131,9 @@ Mods that read raw LWJGL keyboard state instead of registered keybindings may re
 The radial settings screen offers two opening modes:
 
 - `HOLD`: hold the configured Radial Action Menu input, aim with the right stick or D-pad and release to activate.
-- `TOGGLE`: press once to open, choose an action, then press GUI Confirm. GUI Back or a second radial-menu press closes
-  the menu without activating anything.
+- `TOGGLE`: press once to open, choose an action, release the stick or D-pad if needed, then press GUI Confirm. The
+  last direction stays selected until another direction is chosen. GUI Back or a second radial-menu press closes the
+  menu without activating anything.
 
 Hold Left Shoulder or Right Shoulder for the corresponding extra page; release the shoulder to return to Base. If
 both shoulders are held, Base is used. Return the stick to the center or press Back to cancel in Hold mode.
@@ -184,7 +186,7 @@ multi-command scripting.
 
 - `enableGuiControls`: enable controller input in menus.
 - `cursorSensitivity`: scale the configured cursor speed.
-- `cursorStick`: `LEFT` or `RIGHT`.
+- `cursorStick`: `LEFT` or `RIGHT`; this is also selectable in-game under **Axes & Cursor Stick**.
 - `cursorDeadZone` and `cursorCurveExponent`: tune cursor drift and precision.
 - `cursorSpeed`: maximum cursor speed in display pixels per second.
 - `cursorAcceleration`: how gradually the cursor reaches its requested speed.

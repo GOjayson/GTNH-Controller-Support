@@ -266,6 +266,16 @@ public final class Config {
             "gui",
             cursorStick,
             "Stick used for the GUI cursor. Valid values: LEFT or RIGHT.");
+        if ("LEFT".equalsIgnoreCase(cursorStick)) {
+            cursorStick = "LEFT";
+        } else if ("RIGHT".equalsIgnoreCase(cursorStick)) {
+            cursorStick = "RIGHT";
+        } else {
+            GTNHController.LOG.warn("Invalid GUI cursor stick '{}'; using RIGHT.", cursorStick);
+            cursorStick = "RIGHT";
+            configuration.get("gui", "cursorStick", cursorStick)
+                .set(cursorStick);
+        }
         cursorDeadZone = configuration.getFloat(
             "cursorDeadZone",
             "gui",
@@ -845,6 +855,8 @@ public final class Config {
             .set(enableGuiControls);
         configuration.get("gui", "cursorSensitivity", cursorSensitivity)
             .set(cursorSensitivity);
+        configuration.get("gui", "cursorStick", cursorStick)
+            .set(cursorStick);
         configuration.get("gui", "cursorDeadZone", cursorDeadZone)
             .set(cursorDeadZone);
         configuration.get("gui", "invertCursorX", invertCursorX)

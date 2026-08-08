@@ -2,6 +2,18 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.4.1
+
+### Added
+
+- Added an in-game Left/Right GUI cursor-stick selector under `Controller support -> Axes & Cursor Stick`.
+
+### Fixed
+
+- Toggle radial menus now remember the last stick or D-pad direction after the control returns to center, allowing
+  the user to release the direction before pressing Confirm.
+- GUI cursor-stick changes now persist in the controller configuration and exported profiles.
+
 ## 1.4.0
 
 ### Added

@@ -28,4 +28,14 @@ final class RadialMenuSelection {
     static int updateDPadLatch(int previousSelection, int currentSelection) {
         return currentSelection >= 0 ? currentSelection : previousSelection;
     }
+
+    static int updateToggleLatch(int previousSelection, int stickSelection, int dPadSelection, boolean toggleMode) {
+        if (!toggleMode) {
+            return -1;
+        }
+        if (dPadSelection >= 0) {
+            return dPadSelection;
+        }
+        return stickSelection >= 0 ? stickSelection : previousSelection;
+    }
 }

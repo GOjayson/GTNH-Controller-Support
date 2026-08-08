@@ -33,7 +33,7 @@ YouTube video.
 ## Features
 
 - True analog movement and camera control with separate movement, camera, cursor and trigger deadzones.
-- Independent camera X/Y and GUI cursor X/Y inversion.
+- Selectable left- or right-stick GUI cursor with independent camera X/Y and cursor X/Y inversion.
 - In-game controller selection when more than one SDL gamepad is connected.
 - Guided calibration with live drift detection, range checks and suggested deadzones/trigger thresholds.
 - Full controller test screen for sticks, triggers, buttons, paddles and miscellaneous SDL inputs.
@@ -122,7 +122,7 @@ SDL uses physical button positions, so the Xbox labels below map sensibly to oth
 
 | Input | Action |
 | --- | --- |
-| Right stick | Move the virtual cursor |
+| Right stick (left selectable) | Move the virtual cursor |
 | South / Xbox A | Left-click and drag |
 | North / Xbox Y | Quick-move the hovered inventory stack |
 | West / Xbox X | Right-click and drag |
@@ -144,7 +144,11 @@ example, holding LB and A records `LB+A`. A larger active chord takes precedence
 Additional Minecraft and mod actions can be assigned under `Controller support -> Minecraft & Mod Bindings` or placed
 on any of the three radial pages. Hold LB or RB while the radial menu is open to access the two extra pages. Radial
 Menu settings also provide Hold and Toggle opening modes plus editable one-shot chat macros such as `/tpa accept` or
-`Hi all`.
+`Hi all`. Toggle mode remembers the last aimed direction, so the stick or D-pad can be released before pressing
+Confirm.
+
+Choose whether the left or right stick moves the virtual cursor under
+`Controller support -> Axes & Cursor Stick`.
 
 Controller profiles are managed under
 `Controller support -> Controller Setup & Test -> Profile Import & Export`. Exported `.cfg` files are stored in

@@ -56,4 +56,22 @@ public class RadialMenuSelectionTest {
         assertEquals(4, RadialMenuSelection.updateDPadLatch(4, -1));
         assertEquals(6, RadialMenuSelection.updateDPadLatch(4, 6));
     }
+
+    @Test
+    public void toggleModeRemembersStickSelectionAfterCentering() {
+        assertEquals(0, RadialMenuSelection.updateToggleLatch(-1, 0, -1, true));
+        assertEquals(0, RadialMenuSelection.updateToggleLatch(0, -1, -1, true));
+    }
+
+    @Test
+    public void newestToggleDirectionReplacesTheLatchedSelection() {
+        assertEquals(2, RadialMenuSelection.updateToggleLatch(0, 2, -1, true));
+        assertEquals(6, RadialMenuSelection.updateToggleLatch(2, -1, 6, true));
+    }
+
+    @Test
+    public void holdModeDoesNotLatchStickSelection() {
+        assertEquals(-1, RadialMenuSelection.updateToggleLatch(0, -1, -1, false));
+        assertEquals(-1, RadialMenuSelection.updateToggleLatch(-1, 4, -1, false));
+    }
 }

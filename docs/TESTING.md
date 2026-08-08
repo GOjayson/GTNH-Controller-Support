@@ -44,7 +44,8 @@ release; test the exact release JAR as well.
 
 ## Main menu and virtual cursor
 
-- Move the right stick in all four directions.
+- Under `Controller support -> Axes & Cursor Stick`, select Right and move the right stick in all four directions.
+- Select Left and verify only the left stick moves the GUI cursor. Restart the game and verify the selection persists.
 - Verify smooth acceleration, precise low-speed movement and a clean stop.
 - Confirm that the native cursor disappears when the controller takes ownership.
 - Open Singleplayer and select a world.
@@ -152,12 +153,14 @@ GUI Confirm can drag the map and both shoulder actions zoom it.
 
 - Assign different registered actions to Base, Hold LB and Hold RB.
 - In Hold mode, hold the radial-menu input, select with the right stick and release.
-- In Toggle mode, press once to open, release the radial input, select an action and press GUI Confirm.
+- In Toggle mode, press once to open, release the radial input, select an action, return the stick to center and then
+  press GUI Confirm. The highlighted action must remain selected and activate exactly once.
+- Repeat the Toggle test with the D-pad and verify a new direction replaces the previous latched choice.
 - In Toggle mode, verify GUI Back and a second radial-input press close without activating the selection.
 - While it is open, hold each shoulder and verify the page label and all eight assignments change.
 - Hold both shoulders and verify the Base page is selected.
-- Repeat with the D-pad.
-- Return the stick to center before release and verify cancellation.
+- Repeat the page and Hold-mode tests with the D-pad.
+- In Hold mode, return the stick to center before releasing the radial input and verify cancellation.
 - Assign Screenshot and verify that exactly one screenshot is created.
 - Remove a mod that owns an assigned action and verify that the slot becomes missing without activating another action.
 

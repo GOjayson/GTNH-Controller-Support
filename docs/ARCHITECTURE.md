@@ -18,7 +18,8 @@ Gameplay and GUI control are intentionally separate:
 - Quick Move resolves the visible container slot under the virtual cursor and invokes that container's normal
   shift-click operation directly. It does not fake a global Shift key, so unrelated mod shortcuts cannot fire.
 - `RadialMenuController` dispatches one registered action or one explicitly selected single-line chat macro after
-  radial selection. Hold and Toggle opening modes share the same action resolver.
+  radial selection. Hold and Toggle opening modes share the same action resolver. Toggle mode latches the most recent
+  stick or D-pad direction so selection and confirmation do not need to be performed simultaneously.
 - `ModKeyBindingController` maps SDL inputs to exact registered `KeyBinding` objects and optional external registries.
 
 Separating contexts prevents a button such as Xbox B from triggering Sneak and GUI Back simultaneously.

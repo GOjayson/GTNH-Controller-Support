@@ -62,7 +62,7 @@ public final class GuiControllerSettingsScreen extends GuiScreen implements Cont
         buttonList.add(new GuiButton(GUI_BINDINGS, centerX + 5, 108, 150, 20, "GUI Bindings"));
         buttonList.add(new GuiButton(SENSITIVITY, centerX - 155, 130, 150, 20, "Sensitivity"));
         buttonList.add(new GuiButton(DEADZONES, centerX + 5, 130, 150, 20, "Deadzones"));
-        buttonList.add(new GuiButton(AXES, centerX - 155, 152, 150, 20, "Axis Inversion"));
+        buttonList.add(new GuiButton(AXES, centerX - 155, 152, 150, 20, "Axes & Cursor Stick"));
         buttonList.add(new GuiButton(NAVIGATION, centerX + 5, 152, 150, 20, "Navigation"));
         buttonList.add(new GuiButton(MOD_BINDINGS, centerX - 155, 174, 150, 20, "Minecraft & Mod Bindings"));
         buttonList.add(new GuiButton(RADIAL_MENU, centerX + 5, 174, 150, 20, "Radial Menu"));
