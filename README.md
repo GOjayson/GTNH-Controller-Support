@@ -60,23 +60,27 @@ YouTube video.
 
 ## Requirements
 
-- GregTech: New Horizons 2.9.x
-- Minecraft 1.7.10
-- lwjgl3ify 3.0.0 or newer
-- The Java version recommended by the GTNH 2.9 launcher configuration
+- Minecraft 1.7.10.
+- lwjgl3ify 3.0.0 or newer, with its matching LWJGL and SDL3 libraries.
+- A Java runtime compatible with the selected GTNH instance and lwjgl3ify version.
 
-GTNH 2.8.4 ships an older lwjgl3ify version without the SDL3 API required by this mod.
+GTNH 2.9.x is the primary development and testing target. The declared lwjgl3ify minimum does not establish a
+verified working dependency combination for every GTNH version.
 
 ## Installation
 
 1. Open the [latest release](https://github.com/GOjayson/GTNH-Controller-Support/releases/latest).
 2. Download the normal mod JAR. Do not download a `dev` or `sources` JAR.
-3. Place the JAR in the `mods` folder of a separate GTNH 2.9.x instance.
-4. Connect the controller and start the game.
-5. Open `Options -> Controls -> Controller support` to configure it.
-6. Open `Controller Setup & Test -> Calibration Wizard` before fine-tuning deadzones manually.
+3. Prepare a separate GTNH instance that meets the requirements above. GTNH 2.9.x is the primary testing target.
+4. If upgrading dependencies, follow their installation instructions. For Prism/MultiMC, update the matching
+   lwjgl3ify launcher patches and libraries along with the mod JAR. See the
+   [lwjgl3ify client instructions](https://github.com/GTNewHorizons/lwjgl3ify#client).
+5. Confirm that the instance starts normally, then place the Controller Support JAR in its `mods` folder.
+6. Connect the controller and start the game.
+7. Open `Options -> Controls -> Controller support` to configure it.
+8. Open `Controller Setup & Test -> Calibration Wizard` before fine-tuning deadzones manually.
 
-Use a test instance and back up important worlds before adding an experimental community mod.
+Use a test instance and back up important worlds before changing dependencies or adding the mod.
 
 ## Supported controllers
 

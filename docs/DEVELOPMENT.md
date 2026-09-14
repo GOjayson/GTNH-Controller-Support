@@ -2,8 +2,18 @@
 
 ## Supported development target
 
-Develop and test against a separate GTNH 2.9.x instance. GTNH 2.8.4 uses lwjgl3ify 2.1.x and does not expose the SDL3
-API required by this mod.
+Develop and run regression tests against a separate GTNH 2.9.x instance. This remains the primary development and
+testing target.
+
+Other GTNH versions on Minecraft 1.7.10 may work with compatible dependencies. GTNH 2.8.4 has been reported working
+after updating lwjgl3ify, Angelica and GTNHLib. Exact updated versions and the extent of testing were not supplied.
+See the [community report](https://github.com/GOjayson/GTNH-Controller-Support/issues/3#issuecomment-5647667970).
+
+Stock GTNH 2.8.4 includes lwjgl3ify 2.1.16 and does not provide the required SDL3 support. The reported working setup
+used updated dependencies.
+
+When investigating another GTNH version, record the complete dependency and runtime versions and follow the
+[testing checklist](TESTING.md). Testing additional versions supplements regression testing on the primary target.
 
 ## Windows prerequisites
 
