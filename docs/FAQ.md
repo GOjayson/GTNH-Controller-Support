@@ -81,17 +81,39 @@ may need a compatibility adapter.
 
 Include the exact screen, GTNH version and `latest.log` in the report.
 
+## Can I use GTNH versions other than 2.9.x?
+
+GTNH 2.9.x is the primary development and testing target, but other GTNH versions on Minecraft 1.7.10 may work with
+compatible dependencies.
+
+A community report confirmed a working GTNH 2.8.4 setup after updating **lwjgl3ify, Angelica and GTNHLib**. The
+reporter initially mentioned only lwjgl3ify, then corrected the report to include the other two mods. Exact updated
+versions and the extent of testing were not provided. See
+[issue #3](https://github.com/GOjayson/GTNH-Controller-Support/issues/3#issuecomment-5647667970).
+
+Stock GTNH 2.8.4 includes lwjgl3ify 2.1.16 and lacks the required SDL3 support. Test dependency updates in a separate
+instance and follow the [lwjgl3ify installation instructions](https://github.com/GTNewHorizons/lwjgl3ify#client).
+For Prism/MultiMC, replacing only the mod JAR can leave older launcher libraries loaded.
+
+This report does not establish compatibility with every GTNH version or a minimum working version for Angelica
+or GTNHLib. See the [compatibility notes](../README.md#gtnh-version-compatibility).
+
 ## Minecraft does not start
 
 Confirm:
 
-- the instance is GTNH 2.9.x;
-- lwjgl3ify is 3.0.0 or newer;
-- the normal mod JAR was installed instead of the `dev` or `sources` JAR;
-- the launcher uses the Java version required by the GTNH instance.
+- the instance uses Minecraft 1.7.10;
+- lwjgl3ify is 3.0.0 or newer and its matching launcher patches, libraries and native files are installed;
+- the normal Controller Support JAR was installed instead of the `dev` or `sources` JAR;
+- the launcher uses a Java runtime compatible with the selected instance and lwjgl3ify version;
+- the instance starts without Controller Support after any dependency updates.
 
-Attach `logs\latest.log` and `logs\fml-client-latest.log` when reporting startup failures.
+On older GTNH versions, check the compatibility notes above and the requirements of the updated dependencies.
+The declared lwjgl3ify minimum alone does not guarantee that every combination of pack dependencies will work.
 
+Attach `logs/latest.log` and `logs/fml-client-latest.log`, plus any crash report, when reporting startup failures.
+Include the exact versions of GTNH, Controller Support, lwjgl3ify, Angelica and GTNHLib, together with the launcher,
+Java version and operating system.
 ## `spotlessJavaCheck` fails
 
 Run:
