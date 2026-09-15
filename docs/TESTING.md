@@ -100,6 +100,19 @@ Test at least:
 
 Verify slot highlighting, item tooltips, left-click, right-click half stacks, dragging and closing the screen.
 
+For BetterQuesting quest items (issue #4):
+
+- Hover a required item with a known recipe and press GUI Confirm. NEI must open its crafting recipe once.
+- Return to the quest and press GUI Alternate over the item. NEI must open its usages once.
+- Hold each controller input through the transition. Releasing it must not activate an item in the NEI screen.
+- Repeat immediately after a physical left-click, right-click and mouse-wheel event. The controller action must not
+  depend on which native mouse event happened last.
+- Verify ordinary quest navigation, item-variant popups and reward selection still behave as they do with a mouse.
+- Repeat recipe and usage clicks with the physical mouse after using the controller.
+- Test an item with no recipe and verify that the quest remains usable.
+- Check a disposable instance without NEI and one without BetterQuesting. The optional integration must not prevent
+  startup or interfere with normal GUI clicks.
+
 For JourneyMap, hold GUI Confirm over the map, move the cursor and release. Verify that the map stays at the new
 position and Follow is disabled. For Galacticraft, verify that the cursor remains visible, planets can be selected,
 GUI Confirm can drag the map and both shoulder actions zoom it.
