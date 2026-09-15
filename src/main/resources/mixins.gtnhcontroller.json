@@ -17,7 +17,8 @@
     "MixinGuiScreenControllerKeyDispatch",
     "MixinMovementInputFromOptions",
     "MixinNeiClientConfigControllerKeys",
-    "MixinNeiKeyManagerControllerKeys"
+    "MixinNeiKeyManagerControllerKeys",
+    "MixinNeiShortcutInputHandlerControllerMouse"
   ],
   "server": []
 }

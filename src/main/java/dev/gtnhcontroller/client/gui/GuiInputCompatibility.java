@@ -301,7 +301,14 @@ final class GuiInputCompatibility {
         try {
             Method method = screen.getClass()
                 .getMethod(methodName, Integer.TYPE, Integer.TYPE, Integer.TYPE);
-            method.invoke(screen, mouseX, mouseY, mouseButton);
+            if ("onMouseClick".equals(methodName)) {
+                // NEI's item shortcut reads the native event button instead of BetterQuesting's click argument.
+                try (ControllerMouseClickContext ignored = ControllerMouseClickContext.open(mouseButton)) {
+                    method.invoke(screen, mouseX, mouseY, mouseButton);
+                }
+            } else {
+                method.invoke(screen, mouseX, mouseY, mouseButton);
+            }
             return true;
         } catch (NoSuchMethodException | IllegalAccessException exception) {
             GTNHController.LOG.warn(
