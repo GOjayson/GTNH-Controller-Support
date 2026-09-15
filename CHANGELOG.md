@@ -2,6 +2,25 @@
 
 All notable changes to GTNH Controller Support are recorded here.
 
+## 1.4.3
+
+### Fixed
+
+- Controller clicks on NEI inventory item panels now supply the correct button when NEI opens recipes or usages on
+  release, including when the last physical mouse event used another button (issue #7).
+- Forced GUI releases clear pending NEI input without activating recipe or usage shortcuts.
+
+### Development
+
+- Documented PR-based development and release tagging from a verified merged commit to avoid tagging an outdated
+  local checkout.
+
+## 1.4.2
+
+### Fixed
+
+- Controller clicks on required BetterQuesting quest items can open NEI recipes and usages (issue #4).
+
 ## 1.4.1
 
 ### Added

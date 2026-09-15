@@ -100,6 +100,20 @@ Test at least:
 
 Verify slot highlighting, item tooltips, left-click, right-click half stacks, dragging and closing the screen.
 
+For NEI inventory item panels (issue #7), use recipe mode and an item with a known recipe and usages:
+
+- In the player inventory, hover the item in NEI's item list and tap GUI Confirm. Its recipe must open once on release.
+- Return to the inventory and tap GUI Alternate over the item. Its usages must open once on release.
+- Repeat in a chest, Creative inventory and a GTNH machine GUI, and navigate to another recipe from the NEI recipe GUI.
+- Repeat after a physical left-click, right-click, wheel event and cursor movement. A stale native event must not
+  change which controller action opens.
+- Hold the input, then release it normally. Preserve NEI's normal distinction between a click and a drag.
+- Hold an input over an NEI item, then close the inventory, change screens, disconnect the controller or lose window
+  focus. Cleanup must not open a recipe or usage screen. Reconnect/refocus and verify a fresh click still works.
+- Test NEI bookmarks, page buttons and the search field, plus ordinary inventory pickup, right-click and Quick Move.
+- Repeat recipe and usage clicks with the physical mouse after controller use and repeat the BetterQuesting checks below.
+- Verify startup and normal GUI clicks in a disposable instance without NEI.
+
 For BetterQuesting quest items (issue #4):
 
 - Hover a required item with a known recipe and press GUI Confirm. NEI must open its crafting recipe once.

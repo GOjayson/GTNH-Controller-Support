@@ -329,26 +329,51 @@ public final class GuiController {
                 setBlocked(mouseButton, true);
                 return;
             }
-            int mouseX = cursorX(screen);
-            int mouseY = cursorY(screen);
-            if (!inputCompatibility.interceptMousePressed(screen, mouseX, mouseY, mouseButton)) {
-                accessor(screen).gtnhcontroller$mouseClicked(mouseX, mouseY, mouseButton);
-            }
-            inputCompatibility.mousePressed(screen, mouseX, mouseY, mouseButton);
+            dispatchMousePressed(screen, mouseButton);
             setHeld(mouseButton, true);
             setPressStarted(mouseButton, System.currentTimeMillis());
         } else if (!controllerDown && held) {
             if (!Mouse.isButtonDown(mouseButton)) {
-                int mouseX = cursorX(screen);
-                int mouseY = cursorY(screen);
-                inputCompatibility.beforeMouseReleased(screen, mouseX, mouseY, mouseButton);
-                if (!inputCompatibility.interceptMouseReleased(screen, mouseX, mouseY, mouseButton)) {
-                    accessor(screen).gtnhcontroller$mouseMovedOrUp(mouseX, mouseY, mouseButton);
-                }
-                inputCompatibility.mouseReleased(screen, mouseX, mouseY, mouseButton);
+                dispatchMouseReleased(screen, mouseButton, false);
             }
             setHeld(mouseButton, false);
         }
+    }
+
+    private void dispatchMousePressed(GuiScreen screen, int mouseButton) {
+        int mouseX = cursorX(screen);
+        int mouseY = cursorY(screen);
+        ControllerMouseClickContext.dispatch(mouseButton, () -> {
+            if (!inputCompatibility.interceptMousePressed(screen, mouseX, mouseY, mouseButton)) {
+                accessor(screen).gtnhcontroller$mouseClicked(mouseX, mouseY, mouseButton);
+            }
+            inputCompatibility.mousePressed(screen, mouseX, mouseY, mouseButton);
+        });
+    }
+
+    private void dispatchMouseReleased(GuiScreen screen, int mouseButton, boolean cancelled) {
+        int mouseX = cursorX(screen);
+        int mouseY = cursorY(screen);
+        Runnable callback = () -> {
+            inputCompatibility.beforeMouseReleased(screen, mouseX, mouseY, mouseButton);
+            if (!inputCompatibility.interceptMouseReleased(screen, mouseX, mouseY, mouseButton)) {
+                accessor(screen).gtnhcontroller$mouseMovedOrUp(mouseX, mouseY, mouseButton);
+            }
+            inputCompatibility.mouseReleased(screen, mouseX, mouseY, mouseButton);
+        };
+        // NEI's item panel resolves recipes on release. Cleanup must clear that pending click without activating it.
+        if (cancelled) {
+            ControllerMouseClickContext.dispatchCancelled(callback);
+        } else {
+            ControllerMouseClickContext.dispatch(mouseButton, callback);
+        }
+    }
+
+    private void dispatchMouseDragged(GuiScreen screen, int mouseX, int mouseY, int mouseButton, long heldTime) {
+        ControllerMouseClickContext.dispatch(mouseButton, () -> {
+            accessor(screen).gtnhcontroller$mouseClickMove(mouseX, mouseY, mouseButton, heldTime);
+            inputCompatibility.mouseDragged(screen, mouseX, mouseY, mouseButton, heldTime);
+        });
     }
 
     private void invokeDragCallbacks() {
@@ -357,16 +382,10 @@ public final class GuiController {
         long currentTimeMillis = System.currentTimeMillis();
 
         if (leftHeld) {
-            accessor(activeScreen)
-                .gtnhcontroller$mouseClickMove(mouseX, mouseY, 0, currentTimeMillis - leftPressStartedMillis);
-            inputCompatibility
-                .mouseDragged(activeScreen, mouseX, mouseY, 0, currentTimeMillis - leftPressStartedMillis);
+            dispatchMouseDragged(activeScreen, mouseX, mouseY, 0, currentTimeMillis - leftPressStartedMillis);
         }
         if (rightHeld) {
-            accessor(activeScreen)
-                .gtnhcontroller$mouseClickMove(mouseX, mouseY, 1, currentTimeMillis - rightPressStartedMillis);
-            inputCompatibility
-                .mouseDragged(activeScreen, mouseX, mouseY, 1, currentTimeMillis - rightPressStartedMillis);
+            dispatchMouseDragged(activeScreen, mouseX, mouseY, 1, currentTimeMillis - rightPressStartedMillis);
         }
     }
 
@@ -489,22 +508,10 @@ public final class GuiController {
     private void releaseHeldButtons(Minecraft minecraft, GuiScreen screen) {
         boolean screenChanged = screen != minecraft.currentScreen;
         if (screen != null && leftHeld && (screenChanged || !Mouse.isButtonDown(0))) {
-            int mouseX = cursorX(screen);
-            int mouseY = cursorY(screen);
-            inputCompatibility.beforeMouseReleased(screen, mouseX, mouseY, 0);
-            if (!inputCompatibility.interceptMouseReleased(screen, mouseX, mouseY, 0)) {
-                accessor(screen).gtnhcontroller$mouseMovedOrUp(mouseX, mouseY, 0);
-            }
-            inputCompatibility.mouseReleased(screen, mouseX, mouseY, 0);
+            dispatchMouseReleased(screen, 0, true);
         }
         if (screen != null && rightHeld && (screenChanged || !Mouse.isButtonDown(1))) {
-            int mouseX = cursorX(screen);
-            int mouseY = cursorY(screen);
-            inputCompatibility.beforeMouseReleased(screen, mouseX, mouseY, 1);
-            if (!inputCompatibility.interceptMouseReleased(screen, mouseX, mouseY, 1)) {
-                accessor(screen).gtnhcontroller$mouseMovedOrUp(mouseX, mouseY, 1);
-            }
-            inputCompatibility.mouseReleased(screen, mouseX, mouseY, 1);
+            dispatchMouseReleased(screen, 1, true);
         }
         leftHeld = false;
         rightHeld = false;

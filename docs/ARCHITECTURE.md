@@ -91,6 +91,13 @@ their own `KeyState` objects, while newer builds retain an internal map of vanil
 in both generations can poll raw keyboard state, so optional pseudo-Mixins expose only the currently held controller
 action to NEI's existing handlers. No NEI classes are linked at compile time.
 
+NEI's item panels activate recipe and usage shortcuts on mouse release, whereas BetterQuesting can activate them on
+press. `ControllerMouseClickContext` scopes the controller button around GUI press, drag and release callbacks so
+the optional NEI shortcut Mixin receives the correct button in either path. The screen's existing mouse callbacks
+still dispatch to NEI; there is no second call into its input manager. Forced releases use a cancelled context that
+lets handlers clear pending input but suppresses NEI recipe/usage shortcuts. Outside these callbacks, NEI reads its
+normal native mouse event. Nested dispatch and exceptions restore the previous context.
+
 ## Safety principles
 
 - Held controller actions are released on menus, focus loss, disabled controls and disconnect.

@@ -69,9 +69,10 @@ Before committing:
 
 ```powershell
 .\gradlew.bat spotlessApply
-.\gradlew.bat test
 .\gradlew.bat build
 ```
+
+`build` already runs the tests.
 
 Do not commit generated directories such as `.gradle`, `build`, `run`, logs, saves or local configuration.
 
@@ -87,17 +88,53 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the design boundaries.
 
 ## Release process
 
-1. Make sure `main` builds successfully.
-2. Update `CHANGELOG.md`.
-3. Commit the release.
-4. Create an annotated semantic-version tag, for example:
+1. Start each fix on a branch from an up-to-date `origin/main`. A separate worktree can keep other unfinished work
+   in its existing folder:
 
    ```powershell
-   git tag -a 1.0.1 -m "GTNH Controller Support 1.0.1"
-   git push origin 1.0.1
+   git fetch origin
+   git worktree add -b fix/short-description ..\GTNH-Controller-Support-fix origin/main
+   cd ..\GTNH-Controller-Support-fix
    ```
 
-5. Verify the GitHub release workflow.
-6. Download the normal JAR from the created release and test that exact asset in a clean GTNH instance.
+2. Make the source changes, update `CHANGELOG.md`, run `spotlessApply build`, and test the resulting normal JAR in
+   the separate GTNH instance.
+3. Review and stage only the files for this fix, commit, and push the branch. Create a PR with base `main` and include
+   `Fixes #N` for the relevant issue. Wait for its build checks to pass, review the diff, and merge the PR.
+4. Wait for the build on the merged `main` commit to pass. Fetch it and inspect the commit to release:
 
-Never reuse a published release tag. Fixes after `1.0.0` belong in `1.0.1`.
+   ```powershell
+   git fetch origin
+   if ($LASTEXITCODE -ne 0) { throw "Fetch failed; do not create a release tag." }
+   $releaseCommit = (git rev-parse origin/main).Trim()
+   if ($LASTEXITCODE -ne 0) { throw "Cannot resolve origin/main." }
+   git log -1 --oneline $releaseCommit
+   ```
+
+   Confirm this is the merged commit whose build passed and that it contains the intended fix. `git fetch` updates
+   `origin/main`; it does not advance the currently checked-out local branch. Always provide the verified commit to
+   `git tag` explicitly.
+
+5. Choose an unused patch version and create an annotated tag at that exact commit. For example, after merging the
+   NEI inventory-click fix following `1.4.2`:
+
+   ```powershell
+   $releaseVersion = "1.4.3"
+   git grep --quiet -F "ControllerMouseClickContext.dispatchCancelled(callback)" $releaseCommit -- src/main/java/dev/gtnhcontroller/client/gui/GuiController.java
+   if ($LASTEXITCODE -ne 0) { throw "The selected commit is missing the NEI inventory-click fix." }
+   git tag -a $releaseVersion $releaseCommit -m "GTNH Controller Support $releaseVersion"
+   if ($LASTEXITCODE -ne 0) { throw "Tag creation failed; do not push or overwrite an existing tag." }
+   git push origin "refs/tags/$releaseVersion"
+   if ($LASTEXITCODE -ne 0) { throw "Tag push failed; check the error before continuing." }
+   git ls-remote origin "refs/tags/$releaseVersion^{}"
+   ```
+
+   The final command must show the same commit as `$releaseCommit`. It resolves an annotated tag to the source
+   commit, rather than showing the tag object's own ID.
+
+6. Verify the new `Release tagged build` workflow. Download the normal JAR from that release and test that exact
+   asset in a clean GTNH instance. Changes made after tagging require another release; rerunning an old workflow
+   still builds its original commit.
+
+Use a new patch version for changes to an already distributed release. If correcting an accidental, undistributed
+tag, remove its obsolete release assets as well as the tag before rebuilding it from the intended commit.
